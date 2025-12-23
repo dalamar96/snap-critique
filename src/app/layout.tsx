@@ -14,7 +14,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snapcritique.com'),
   title: 'Snap Critique | AI Photography Analysis',
   description: 'AI-powered photography critique engine. Upload your shots for detailed analysis, composition scoring, and improvement checklists.',
   openGraph: {
