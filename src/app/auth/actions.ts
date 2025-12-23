@@ -48,7 +48,7 @@ export async function signup(formData: FormData) {
     const password = formData.get('password') as string
     const next = formData.get('next') as string
 
-    const siteUrl = (await headers()).get('origin') || 'https://www.snapcritique.com';
+    const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.snapcritique.com';
     console.log("Site URL for redirect resolved to: ", siteUrl);
     let emailRedirectTo = `${siteUrl}/auth/callback`
 
