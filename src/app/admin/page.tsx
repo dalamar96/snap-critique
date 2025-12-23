@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 import { updateSystemPrompt } from './actions'
 import { PromptForm } from './prompt-form'
 
+import { UserTable } from './user-table'
+
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
@@ -42,22 +44,21 @@ export default async function AdminPage() {
   }
 
   // 3. Fetch System Stats (Using Admin Client to bypass RLS)
-  const [submissionsRel, promptsRel] = await Promise.all([
+  const [submissionsRel, profilesRel] = await Promise.all([
      adminDb
         .from('submissions')
         .select('*, profiles(email), analyses(is_unlocked, score)')
         .order('created_at', { ascending: false })
         .limit(50),
      adminDb
-        .from('system_prompts')
+        .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10)
+        .limit(50)
   ])
 
   const submissions = submissionsRel.data
-  const prompts = promptsRel.data
-  const activePrompt = prompts?.find(p => p.is_active)
+  const profiles = profilesRel.data
 
   const totalSubmissions = submissions?.length || 0
   const completedAnalyses = submissions?.filter(s => s.status === 'done').length || 0
@@ -81,6 +82,8 @@ export default async function AdminPage() {
                 Status: <span className="text-green-500">ONLINE</span>
              </div>
           </div>
+
+
        </div>
 
        <div className="p-6 md:p-12 max-w-7xl mx-auto space-y-12">
@@ -93,7 +96,7 @@ export default async function AdminPage() {
              <KpiCard label="Est. Revenue" value={`$${unlockedRevenue.toFixed(2)}`} icon={<Search className="w-5 h-5 text-primary"/>} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 gap-12">
             <div>
                 <h2 className="text-xl font-bold uppercase mb-6 flex items-center gap-2">
                     <Activity className="w-5 h-5 text-primary" />
@@ -144,37 +147,14 @@ export default async function AdminPage() {
                     </div>
                 </div>
             </div>
+          </div>
 
-            <div className="flex flex-col h-full">
-               <h2 className="text-xl font-bold uppercase mb-6 flex items-center gap-2">
-                  <Database className="w-5 h-5 text-primary" />
-                  System Prompt
-               </h2>
-               
-               <div className="flex-1 bg-black border border-white/10 rounded-lg p-6 flex flex-col">
-                  <div className="mb-4">
-                     <span className="text-xs text-slate-500 uppercase tracking-wider">Active Version</span>
-                     <div className="text-lg font-bold text-white">{activePrompt?.version || 'None'}</div>
-                  </div>
-
-                  <PromptForm initialContent={activePrompt?.content || ''} />
-
-                  <div className="mt-8">
-                      <h3 className="text-sm font-bold text-slate-400 uppercase mb-4">Version History</h3>
-                      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                          {prompts?.map(p => (
-                              <div key={p.id} className="p-3 border border-white/5 bg-white/5 rounded text-xs flex justify-between items-center">
-                                  <div>
-                                      <div className="font-bold">{p.version}</div>
-                                      <div className="text-slate-500">{new Date(p.created_at).toLocaleDateString()}</div>
-                                  </div>
-                                  {p.is_active && <span className="text-green-500 font-bold px-2 py-1 bg-green-500/10 rounded">ACTIVE</span>}
-                              </div>
-                          ))}
-                      </div>
-                  </div>
-               </div>
-            </div>
+          <div className="mt-12">
+             <h2 className="text-xl font-bold uppercase mb-6 flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Users
+             </h2>
+             <UserTable profiles={profiles || []} />
           </div>
        </div>
     </div>

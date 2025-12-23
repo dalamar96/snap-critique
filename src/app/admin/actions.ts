@@ -50,3 +50,35 @@ export async function updateSystemPrompt(content: string) {
 
     revalidatePath('/admin')
 }
+
+export async function getUserAnalyses(userId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+
+    // Verify admin
+    const { data: profile } = await adminDb
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    // Fetch submissions
+    const { data: submissions, error } = await adminDb
+        .from('submissions')
+        .select('*, analyses(id, score, is_unlocked, title)') // Join logic might vary depending on schema, assuming analyses uses submission_id
+        // Actually, analyses table has submission_id. But 'analyses' in select might not work if relationship name is different or not defined in Supabase client types exactly how we expect for joins without seeing schema introspection.
+        // Let's rely on the previous admin page fetch which used: '*, profiles(email), analyses(is_unlocked, score)'
+        // That implies 'analyses' is the correct relation name.
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+    if (error) throw new Error(error.message)
+
+    return submissions
+}

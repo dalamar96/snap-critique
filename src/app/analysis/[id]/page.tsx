@@ -114,16 +114,36 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
       }
   }
 
-  // 5. Determine Lock Status from DB (Single Source of Truth)
-  const isUnlocked = analysisRecord.is_unlocked
-
-  // Type assertion
-  const analysisData = analysisRecord.full_critique as any 
-  
-  // 6. Auth Context & Security Guard
+  // 5. Auth Context & Security Guard
   const supabaseAuth = createClient()
   const { data: { user } } = await (await supabaseAuth).auth.getUser()
+
+  let userCredits = 0
+  let isAdmin = false
   
+  if (user) {
+      // Fetch Credits & Admin Status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits_balance, is_admin')
+        .eq('id', user.id)
+        .single()
+      
+      userCredits = profile?.credits_balance || 0
+      isAdmin = profile?.is_admin || false
+      
+      // Claim Submission if Guest (orphaned) AND not visiting as an admin (unless they are claiming it for themselves logic, but admin viewing shouldn't claim)
+      // Actually, standard behavior: if logged in user visits an orphaned submission, they claim it. Even admin.
+      if (!submissionRecord.user_id) {
+          await supabase
+            .from('submissions')
+            .update({ user_id: user.id })
+            .eq('id', id)
+            
+          submissionRecord.user_id = user.id // Update local record to reflect claim
+      }
+  }
+
   // Security Check: Access Control
   if (submissionRecord.user_id) {
       if (!user) {
@@ -131,34 +151,18 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
           redirect(`/login?next=${encodeURIComponent(`/analysis/${id}`)}`)
       }
       
-      if (user.id !== submissionRecord.user_id) {
-          // Owned resource, but user mismatch -> 404 Not Found (Hide existence)
+      if (user.id !== submissionRecord.user_id && !isAdmin) {
+          // Owned resource, mismatched user, AND NOT ADMIN -> 404 Not Found (Hide existence)
           return notFound()
       }
   }
 
-  let userCredits = 0
-  
-  if (user) {
-      // Fetch Credits
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('credits_balance')
-        .eq('id', user.id)
-        .single()
-      
-      userCredits = profile?.credits_balance || 0
-      
-      // Claim Submission if Guest (orphaned)
-      if (!submissionRecord.user_id) {
-          await supabase
-            .from('submissions')
-            .update({ user_id: user.id })
-            .eq('id', id)
-            
-          // We don't verify update success for speed, assume it works if RLS allows or we use admin client (we use admin client here)
-      }
-  }
+  // 6. Determine Lock Status from DB (Single Source of Truth) OR Admin Override OR Owner Override
+  const isOwner = user && submissionRecord.user_id === user.id
+  const isUnlocked = analysisRecord.is_unlocked || isOwner || isAdmin
+
+  // Type assertion
+  const analysisData = analysisRecord.full_critique as any 
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-12 md:py-24">

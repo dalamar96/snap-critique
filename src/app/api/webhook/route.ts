@@ -41,10 +41,26 @@ export async function POST(req: Request) {
         if (metadata.userId && metadata.creditAmount) {
             const userId = metadata.userId;
             const creditsToAdd = parseInt(metadata.creditAmount);
+            const amount = session.amount_total;
+            const currency = session.currency;
 
             console.log(`[Webhook] Adding ${creditsToAdd} credits to user ${userId}`);
 
-            // 1. Increment Credits
+            // 1. Log Transaction
+            const { error: txError } = await supabase.from('transactions').insert({
+                user_id: userId,
+                stripe_session_id: session.id,
+                amount: amount,
+                currency: currency,
+                credits: creditsToAdd,
+                type: 'credit_purchase'
+            });
+
+            if (txError) {
+                console.error('[Webhook] Failed to log transaction:', txError);
+            }
+
+            // 2. Increment Credits
             const { error: rpcError } = await supabase.rpc('increment_credits', {
                 userid: userId,
                 count: creditsToAdd
@@ -68,6 +84,20 @@ export async function POST(req: Request) {
         // Handle Direct Analysis Unlock (Legacy / Single Purchase)
         if (metadata.analysisId) {
             console.log(`[Webhook] Unlocking analysis ${metadata.analysisId}`);
+
+            // Log Transaction for Unlock
+            const { error: txError } = await supabase.from('transactions').insert({
+                stripe_session_id: session.id,
+                amount: session.amount_total,
+                currency: session.currency,
+                type: 'unlock'
+                // user_id might be null here if guest, or we can try to find it via metadata if linked later
+            });
+
+            if (txError) {
+                console.error('[Webhook] Failed to log unlock transaction:', txError);
+            }
+
             await supabase
                 .from('analyses')
                 .update({ is_unlocked: true })
