@@ -48,20 +48,20 @@ export async function signup(formData: FormData) {
     const password = formData.get('password') as string
     const next = formData.get('next') as string
 
-    const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.snapcritique.com';
-    console.log("Site URL for redirect resolved to: ", siteUrl);
+    const siteUrl = process.env.NEXT_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_VERCEL_URL ?? 'https://www.snapcritique.com';
+
     let emailRedirectTo = `${siteUrl}/auth/callback`
 
     if (emailRedirectTo && next) {
         emailRedirectTo += `?next=${encodeURIComponent(next)}`
     }
-
+    console.log("Site URL for redirect resolved to: ", emailRedirectTo);
     // 1. Sign Up Auth User
     const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-            emailRedirectTo
+            emailRedirectTo: emailRedirectTo,
         }
     })
 
