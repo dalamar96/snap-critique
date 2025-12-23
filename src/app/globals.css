@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: var(--font-mono);
+  --font-sans: var(--font-sans);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --radius-lg: 0px;
+  --radius-md: 0px;
+  --radius-sm: 0px;
+
+  /* Custom Brand Colors */
+  --color-brand-orange: #FF7A00;
+  --color-brand-gray: #1a1a1a;
+  --color-brand-dark: #0a0a0a;
+}
+
+:root {
+  /* Dark Theme Default */
+  --background: hsl(0 0% 0%);
+  /* Hex #000000 */
+  --foreground: hsl(0 0% 98%);
+
+  --card: hsl(0 0% 3.9%);
+  /* Slightly lighter dark */
+  --card-foreground: hsl(0 0% 98%);
+
+  --popover: hsl(0 0% 0%);
+  --popover-foreground: hsl(0 0% 98%);
+
+  --primary: hsl(27 100% 50%);
+  /* #FF7A00 Brand Orange */
+  --primary-foreground: hsl(0 0% 100%);
+
+  --secondary: hsl(240 5% 15%);
+  /* Dark Gray */
+  --secondary-foreground: hsl(0 0% 98%);
+
+  --muted: hsl(240 3.7% 15.9%);
+  --muted-foreground: hsl(240 5% 64.9%);
+
+  --accent: hsl(27 100% 50%);
+  --accent-foreground: hsl(0 0% 100%);
+
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(0 0% 98%);
+
+  --border: hsl(240 3.7% 15.9%);
+  --input: hsl(240 3.7% 15.9%);
+  --ring: hsl(27 100% 50%);
+
+  --radius: 0;
+  /* Sharp Edges */
+}
+
+body {
+  background-color: #000000 !important;
+  color: #ffffff;
+}
+
+@utility btn-primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center text-sm font-bold uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-10 px-6 py-2 border-r-2 border-primary/50 relative overflow-hidden;
+}
+
+/* Grid Background */
+@utility bg-grid-pattern {
+  background-image: linear-gradient(to right, #1a1a1a 1px, transparent 1px),
+    linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
+  background-size: 40px 40px;
+}
