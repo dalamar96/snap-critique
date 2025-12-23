@@ -133,8 +133,8 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
       isAdmin = profile?.is_admin || false
       
       // Claim Submission if Guest (orphaned) AND not visiting as an admin (unless they are claiming it for themselves logic, but admin viewing shouldn't claim)
-      // Actually, standard behavior: if logged in user visits an orphaned submission, they claim it. Even admin.
-      if (!submissionRecord.user_id) {
+      // Claim Submission if Guest (orphaned) AND not visiting as an admin
+      if (!submissionRecord.user_id && !isAdmin) {
           await supabase
             .from('submissions')
             .update({ user_id: user.id })
