@@ -11,7 +11,7 @@ const PACKAGES: any = {
 export async function POST(req: NextRequest) {
     try {
         const { analysisId, packageId } = await req.json();
-        const origin = req.headers.get('origin') || 'http://localhost:3000';
+        const origin = req.headers.get('origin') || 'https://www.snapcritique.com';
 
         // Auth Check (Required for credits)
         const supabase = await createClient()

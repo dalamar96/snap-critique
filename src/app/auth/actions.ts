@@ -49,6 +49,7 @@ export async function signup(formData: FormData) {
     const next = formData.get('next') as string
 
     const origin = (await headers()).get('origin')
+    console.log("Origin: ", origin);
     let emailRedirectTo = origin ? `${origin}/auth/callback` : undefined
 
     if (emailRedirectTo && next) {
