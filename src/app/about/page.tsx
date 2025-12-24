@@ -21,11 +21,11 @@ export default function AboutPage() {
             The Future of Photo Education
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter mb-6">
-            Objective Feedback.<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">Instant Growth.</span>
+            Learn Faster.<br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">Shoot Smarter.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Snap Critique isn&apos;t just another filter. It&apos;s an AI-powered mentor that analyzes your composition, lighting, and technique to help you master the art of photography.
+            Snap Critique is an AI-powered critique tool that breaks down your photo’s composition, light, and technical choices, then turns them into clear takeaways you can apply on your next shot.
           </p>
           <div className="flex flex-col md:flex-row gap-4 justify-center">
              <Link href="/login?view=signup" className="btn-primary py-4 px-8 text-lg font-bold">
