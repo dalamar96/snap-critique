@@ -37,15 +37,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      {/* Anatomy of a Critique Section */}
-      <section id="anatomy" className="py-20 border-t border-white/5 bg-black/50">
-        <div className="container px-4 mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-tight mb-4">The Anatomy of a Critique</h2>
-            <p className="text-slate-400 max-w-xl mx-auto">Every analysis is a deep dive into your image. Here&apos;s exactly what you get with every upload.</p>
-          </div>
-
       {/* Anatomy of a Critique Section */}
       <section id="anatomy" className="py-20 border-t border-white/5 bg-black/50">
         <div className="container px-4 mx-auto">
@@ -219,14 +210,10 @@ export default function AboutPage() {
                         Feedback is useless without action. We generate a tailored <strong>Action Plan</strong> with specific exercises or experiments you can try immediately to improve your next shot.
                     </p>
                 </div>
-
              </div>
-
           </div>
-        </div>
       </section>
-        </div>
-      </section>
+
 
       {/* Pricing Section */}
       <section className="py-20 container px-4 mx-auto">
