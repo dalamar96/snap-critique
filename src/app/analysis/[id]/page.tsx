@@ -246,6 +246,7 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
             imageUrl={imageUrl}
             userCredits={userCredits}
             isGuest={!user}
+            metadata={submissionRecord.metadata}
         />
       </div>
     </div>

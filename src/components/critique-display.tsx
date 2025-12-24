@@ -34,14 +34,16 @@ export function CritiqueDisplay({
   isUnlocked = false, 
   imageUrl,
   userCredits = 0,
-  isGuest = true
+  isGuest = true,
+  metadata
 }: { 
   analysis: AnalysisResult, 
   analysisId?: string, 
   isUnlocked?: boolean, 
   imageUrl?: string | null,
   userCredits?: number,
-  isGuest?: boolean
+  isGuest?: boolean,
+  metadata?: any
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
@@ -188,9 +190,79 @@ export function CritiqueDisplay({
            <h3 className="font-bold flex items-center gap-2 mb-4 uppercase tracking-wider text-slate-300 border-b border-white/10 pb-2 print:text-black print:border-black">
             <Star className="w-5 h-5 text-yellow-500 print:text-black"/> Technical Details
           </h3>
-          <p className="text-slate-400 text-sm print:text-black">
+          <p className="text-slate-400 text-sm print:text-black mb-4">
             {analysis.technical_assessment}
           </p>
+
+          {metadata && Object.keys(metadata).length > 0 && (
+              <div className="grid grid-cols-2 gap-y-3 gap-x-8 text-xs border-t border-white/10 pt-4 mt-4">
+                  {/* Camera & Lens */}
+                  {(metadata.make || metadata.camera) && (
+                      <div className="col-span-2 flex justify-between text-slate-500 border-b border-white/5 pb-2">
+                          <span>Camera</span>
+                          <span className="text-white font-mono text-right">{metadata.make} {metadata.camera}</span>
+                      </div>
+                  )}
+                  {metadata.lens && (
+                      <div className="col-span-2 flex justify-between text-slate-500 border-b border-white/5 pb-2">
+                          <span>Lens</span>
+                          <span className="text-white font-mono text-right">{metadata.lens}</span>
+                      </div>
+                  )}
+
+                   {/* Core Settings */}
+                   {metadata.focal_length && (
+                      <div className="flex justify-between text-slate-500">
+                          <span>Focal Length</span>
+                          <span className="text-white font-mono">{metadata.focal_length}</span>
+                      </div>
+                  )}
+                  {metadata.aperture && (
+                      <div className="flex justify-between text-slate-500">
+                          <span>Aperture</span>
+                          <span className="text-white font-mono">{metadata.aperture}</span>
+                      </div>
+                  )}
+                   {metadata.shutter_speed && (
+                      <div className="flex justify-between text-slate-500">
+                          <span>Shutter</span>
+                          <span className="text-white font-mono">{metadata.shutter_speed}s</span>
+                      </div>
+                  )}
+                   {metadata.iso && (
+                      <div className="flex justify-between text-slate-500">
+                          <span>ISO</span>
+                          <span className="text-white font-mono">{metadata.iso}</span>
+                      </div>
+                  )}
+
+                  {/* Advanced Settings */}
+                  {metadata.exposure_comp && (
+                      <div className="flex justify-between text-slate-500">
+                          <span>Exp. Comp</span>
+                          <span className="text-white font-mono">{metadata.exposure_comp}</span>
+                      </div>
+                  )}
+                   {metadata.metering && (
+                      <div className="flex justify-between text-slate-500">
+                          <span>Metering</span>
+                          <span className="text-white font-mono truncate max-w-[100px]" title={metadata.metering}>{metadata.metering}</span>
+                      </div>
+                  )}
+                  {metadata.flash && (
+                      <div className="flex justify-between text-slate-500">
+                          <span>Flash</span>
+                          <span className="text-white font-mono truncate max-w-[100px]" title={metadata.flash}>{metadata.flash}</span>
+                      </div>
+                  )}
+                   {metadata.datetime && (
+                      <div className="flex justify-between text-slate-500">
+                          <span>Date</span>
+                          <span className="text-white font-mono">{metadata.datetime}</span>
+                      </div>
+                  )}
+              </div>
+          )}
         </div>
       </div>
 

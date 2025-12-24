@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { model } from '@/lib/gemini';
+import ExifReader from 'exifreader';
 
 export async function POST(req: NextRequest) {
     try {
@@ -61,10 +62,70 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await fileData.arrayBuffer();
         const base64Image = Buffer.from(arrayBuffer).toString('base64');
 
+        // 2a. Download ORIGINAL for EXIF (since preview strips it)
+        let originalBuffer = arrayBuffer;
+        if (imagePath.includes('uploads/')) {
+            // If we downloaded preview above, we need to fetch original for EXIF
+            // Check if fileData is actually the preview?
+            // Actually, we can just attempt to download original separately if we are using preview for AI
+
+            // To be efficient, let's just try to grab original if we haven't already
+            if (previewPath !== imagePath && !downloadError) {
+                const { data: originalData, error: originalErr } = await supabase
+                    .storage
+                    .from('submissions')
+                    .download(imagePath)
+
+                if (originalData && !originalErr) {
+                    originalBuffer = await originalData.arrayBuffer()
+                }
+            }
+        }
+
+        // 2a. Extract EXIF Metadata
+        let exifData: any = {}
+        let technicalContext = ""
+        try {
+            const tags = ExifReader.load(originalBuffer);
+            // Extract key fields
+            if (tags) {
+                exifData = {
+                    make: tags['Make']?.description,
+                    camera: tags['Model']?.description,
+                    lens: tags['LensModel']?.description,
+                    iso: tags['ISOSpeedRatings']?.description,
+                    focal_length: tags['FocalLength']?.description,
+                    aperture: tags['FNumber']?.description,
+                    shutter_speed: tags['ExposureTime']?.description,
+                    exposure_comp: tags['ExposureBiasValue']?.description,
+                    metering: tags['MeteringMode']?.description,
+                    flash: tags['Flash']?.description,
+                    datetime: tags['DateTimeOriginal']?.description
+                }
+
+                // Clean undefined values
+                Object.keys(exifData).forEach(key => exifData[key] === undefined && delete exifData[key]);
+
+                if (Object.keys(exifData).length > 0) {
+                    technicalContext = `
+                     Camera Settings (EXIF Data):
+                     Camera: ${exifData.make || ''} ${exifData.camera || 'Unknown'}
+                     Lens: ${exifData.lens || 'Unknown'}
+                     Settings: ISO ${exifData.iso || 'Auto'}, ${exifData.focal_length || ''}, ${exifData.aperture || ''}, ${exifData.shutter_speed || ''}
+                     Exposure: ${exifData.exposure_comp || '0'} EV, Metering: ${exifData.metering || 'Unknown'}, Flash: ${exifData.flash || 'Unknown'}
+                     Timestamp: ${exifData.datetime || 'Unknown'}
+                     `
+                }
+            }
+        } catch (e) {
+            console.log("EXIF Extraction failed (non-critical):", e)
+        }
+
         // 3. Construct Prompt
         const prompt = `
       Act as a world-class photography mentor. Analyze this ${category || 'photo'} based on these goals: ${goals?.join(', ')}.
       User Context: ${context || 'None provided.'}
+      ${technicalContext}
       
       Provide the response in ANY valid JSON format. Do NOT use markdown code blocks.
       The JSON structure must include:
@@ -110,6 +171,7 @@ export async function POST(req: NextRequest) {
             category,
             goals,
             context,
+            metadata: exifData,
             status: 'done'
         };
 
