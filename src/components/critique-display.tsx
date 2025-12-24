@@ -255,6 +255,19 @@ export function CritiqueDisplay({
          </div>
       </div>
 
+      {isGuest && (
+        <div className="fixed bottom-0 left-0 right-0 bg-primary p-4 z-50 print:hidden shadow-lg border-t border-white/20 animate-in slide-in-from-bottom-full duration-700">
+           <div className="container mx-auto max-w-4xl flex items-center justify-between gap-4">
+              <div>
+                  <h3 className="text-black font-black uppercase text-sm md:text-base">Want AI feedback on your photos?</h3>
+                  <p className="text-black/70 text-xs md:text-sm font-medium">Get 5 free detailed critiques just like this one.</p>
+              </div>
+              <a href="/login?view=signup" className="bg-black text-white px-6 py-3 rounded font-bold uppercase tracking-widest text-xs md:text-sm hover:scale-105 transition-transform shrink-0">
+                  Analyze My Photo
+              </a>
+           </div>
+        </div>
+      )}
     </div>
   )
 }

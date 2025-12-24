@@ -4,6 +4,60 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { stripe } from '@/lib/stripe'
 import { revalidatePath } from 'next/cache'
+import { ShareAnalysisDialog } from '@/components/share-analysis-dialog'
+import { Metadata } from 'next'
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const supabase = createAdminClient()
+
+  // Fetch minimal data for metadata
+  const { data: analysis } = await supabase
+    .from('analyses')
+    .select('title, score, is_public')
+    .eq('submission_id', id)
+    .single()
+    
+  const { data: submission } = await supabase
+    .from('submissions')
+    .select('image_path')
+    .eq('id', id)
+    .single()
+
+  if (!analysis) {
+      return {
+          title: 'Analysis Not Found | Snap Critique'
+      }
+  }
+
+  let imageUrl = '/og-image.jpg' // Default 
+  if (submission?.image_path) {
+      // Create a public URL or Signed URL. 
+      // For OG tags, the URL needs to be publicly accessible by the social crawler.
+      // If it's a private bucket, we need a signed URL with long expiration or a proxy.
+      // We will generate a signed URL with 1hr expiration which 'should' be enough for the crawler to cache it immediately.
+      const { data } = await supabase.storage
+        .from('submissions')
+        .createSignedUrl(submission.image_path, 3600)
+      if (data?.signedUrl) imageUrl = data.signedUrl
+  }
+
+  return {
+      title: `${analysis.title} | Snap Critique`,
+      description: `Analysis Score: ${analysis.score}/100. Get AI feedback on your photography with Snap Critique.`,
+      openGraph: {
+          title: analysis.title,
+          description: `I got a ${analysis.score}/100 composition score on Snap Critique.`,
+          images: [imageUrl]
+      },
+      twitter: {
+          card: 'summary_large_image',
+          title: analysis.title,
+          description: `Analysis Score: ${analysis.score}/100`,
+          images: [imageUrl]
+      }
+  }
+}
 
 export default async function ResultsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ unlocked?: string, session_id?: string }> }) {
   const { id } = await params
@@ -146,15 +200,18 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
 
   // Security Check: Access Control
   if (submissionRecord.user_id) {
-      if (!user) {
-          // Owned resource, but user not logged in -> Redirect to Login
+      // Check if public access allowed
+      const isPublic = analysisRecord.is_public
+
+      if (!user && !isPublic) {
+          // Owned resource, not public, user not logged in -> Redirect to Login
           redirect(`/login?next=${encodeURIComponent(`/analysis/${id}`)}`)
       }
       
-      if (user.id !== submissionRecord.user_id && !isAdmin) {
-          // Owned resource, mismatched user, AND NOT ADMIN -> 404 Not Found (Hide existence)
+      if (user && user.id !== submissionRecord.user_id && !isAdmin && !isPublic) {
+          // Owned resource, mismatched user, NOT ADMIN, NOT PUBLIC -> 404 Not Found (Hide existence)
           return notFound()
-      }
+       }
   }
 
   // 6. Determine Lock Status from DB (Single Source of Truth) OR Admin Override OR Owner Override
@@ -167,6 +224,15 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-12 md:py-24">
       <div className="max-w-4xl mx-auto">
+        <div className="flex justify-end mb-4">
+            {/* Only show share button if user is owner or admin */}
+            {(isOwner || isAdmin) && (
+              <ShareAnalysisDialog 
+                submissionId={id} 
+                initialIsPublic={!!analysisRecord.is_public}
+              />
+            )}
+        </div>
         <CritiqueDisplay 
             analysis={analysisData} 
             analysisId={id} 

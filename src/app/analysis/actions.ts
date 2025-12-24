@@ -46,3 +46,36 @@ export async function unlockAnalysis(analysisId: string) {
     revalidatePath(`/analysis/${analysisId}`)
     return { success: true }
 }
+
+export async function togglePublicStatus(submissionId: string, isPublic: boolean) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Unauthorized' }
+    }
+
+    // Verify ownership
+    const { data: submission } = await supabase
+        .from('submissions')
+        .select('user_id')
+        .eq('id', submissionId)
+        .single()
+
+    if (!submission || submission.user_id !== user.id) {
+        return { error: 'Unauthorized' }
+    }
+
+    const adminDb = createAdminClient()
+    const { error } = await adminDb
+        .from('analyses')
+        .update({ is_public: isPublic })
+        .eq('submission_id', submissionId)
+
+    if (error) {
+        return { error: 'Update failed' }
+    }
+
+    revalidatePath(`/analysis/${submissionId}`)
+    return { success: true }
+}

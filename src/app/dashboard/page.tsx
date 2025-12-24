@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Terminal, Clock, CheckCircle, AlertCircle, FileImage, LayoutDashboard } from 'lucide-react'
+import { Terminal, Clock, CheckCircle, AlertCircle, FileImage, LayoutDashboard, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DashboardPublicToggle } from '@/components/dashboard-public-toggle'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
   const [submissionsRel, profileRel] = await Promise.all([
       (await supabase)
         .from('submissions')
-        .select('*, analyses(id, title, score)')
+        .select('*, analyses(id, title, score, is_public)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
       (await supabase)
@@ -103,12 +104,14 @@ export default async function DashboardPage() {
 
              {submissionsWithImages && submissionsWithImages.length > 0 ? (
                submissionsWithImages.map((sub) => (
-                 <Link 
-                   key={sub.id} 
-                   href={`/analysis/${sub.id}`}
-                   className="group block bg-black border border-white/10 hover:border-primary transition-all p-4 md:p-6"
+                 <div 
+                    key={sub.id} 
+                    className="group relative block bg-black border border-white/10 hover:border-primary transition-all p-4 md:p-6"
                  >
-                    <div className="flex items-center gap-6">
+                    {/* Overlay Link covers the whole card except where pointer-events are auto */}
+                    <Link href={`/analysis/${sub.id}`} className="absolute inset-0 z-0" />
+                    
+                    <div className="flex items-center gap-6 relative z-10 pointer-events-none">
                        <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative">
                           {sub.thumbnailUrl ? (
                               <img 
@@ -123,7 +126,7 @@ export default async function DashboardPage() {
                        
                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-1">
-                             <h3 className="text-white font-bold text-lg truncate">
+                             <h3 className="text-white font-bold text-lg truncate group-hover:text-primary transition-colors">
                                 {sub.analyses?.[0]?.title || 'Unknown Subject'}
                              </h3>
                              {sub.status === 'done' && <span className="text-[10px] bg-green-900/30 text-green-500 px-2 py-0.5 border border-green-900 uppercase">Analysis Complete</span>}
@@ -135,12 +138,20 @@ export default async function DashboardPage() {
                           </p>
                        </div>
 
-                       <div className="text-right shrink-0">
-                          <div className="text-3xl font-bold text-primary">{sub.analyses?.[0]?.score || '--'}</div>
-                          <div className="text-[10px] text-slate-500 uppercase">Score</div>
+                       <div className="text-right shrink-0 flex items-center gap-6 pointer-events-auto">
+                          {sub.status === 'done' && (
+                              <DashboardPublicToggle 
+                                   submissionId={sub.id} 
+                                   initialIsPublic={!!sub.analyses?.[0]?.is_public}
+                              />
+                          )}
+                          <div className="flex flex-col items-end">
+                              <div className="text-3xl font-bold text-primary">{sub.analyses?.[0]?.score || '--'}</div>
+                              <div className="text-[10px] text-slate-500 uppercase">Score</div>
+                          </div>
                        </div>
                     </div>
-                 </Link>
+                 </div>
                ))
              ) : (
                 <div className="text-center py-20 border border-dashed border-white/10">
