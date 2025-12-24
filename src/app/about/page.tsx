@@ -281,7 +281,7 @@ export default function AboutPage() {
                     </li>
                 </ul>
                 <Link href="/pricing" className="btn-primary w-full py-4 text-center rounded-lg font-bold shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-                    View Packages
+                    Create Free Account
                 </Link>
             </div>
          </div>
