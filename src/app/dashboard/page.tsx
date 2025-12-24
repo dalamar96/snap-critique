@@ -19,6 +19,7 @@ export default async function DashboardPage() {
         .from('submissions')
         .select('*, analyses(id, title, score, is_public)')
         .eq('user_id', user.id)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false }),
       (await supabase)
         .from('profiles')

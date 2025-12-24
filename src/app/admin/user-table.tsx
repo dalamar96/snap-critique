@@ -130,15 +130,12 @@ export function UserTable({ profiles }: { profiles: Profile[] }) {
                                             >
                                                 {/* Thumbnail Fallback */}
                                                 <div className="w-16 h-16 bg-black rounded overflow-hidden flex-shrink-0 relative border border-white/10">
-                                                    {submission.thumbnail_path || submission.image_path ? (
-                                                        // Cannot easily show authenticated image here without signed URL generation messiness on client or extra complexity. 
-                                                        // For simple admin view, maybe just show icon or try public URL if applicable.
-                                                        // Actually, we can't easily show private bucket images here without signed URLs.
-                                                        // Let's stick to an icon for now unless we want to fetch signed URLs for everything.
-                                                        <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-600">
-                                                           {/* If we strictly need images, we'd need to generate signed URLs in the server action. For now, Icon. */}
-                                                           <ImageIcon className="w-6 h-6" />
-                                                        </div>
+                                                    {submission.signedUrl ? (
+                                                        <img 
+                                                           src={submission.signedUrl} 
+                                                           alt="Thumbnail" 
+                                                           className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                                        />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-600">
                                                             <ImageIcon className="w-6 h-6" />
@@ -166,6 +163,11 @@ export function UserTable({ profiles }: { profiles: Profile[] }) {
                                                         {submission.analyses?.[0]?.is_unlocked && (
                                                             <span className="px-2 py-0.5 rounded uppercase font-bold bg-yellow-500/10 text-yellow-500">
                                                                 Unlocked
+                                                            </span>
+                                                        )}
+                                                        {submission.deleted_at && (
+                                                            <span className="px-2 py-0.5 rounded uppercase font-bold bg-red-950/40 text-red-500 border border-red-900/50">
+                                                                Deleted
                                                             </span>
                                                         )}
                                                     </div>

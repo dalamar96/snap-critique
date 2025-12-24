@@ -80,5 +80,35 @@ export async function getUserAnalyses(userId: string) {
 
     if (error) throw new Error(error.message)
 
-    return submissions
+    const submissionsWithImages = await Promise.all((submissions || []).map(async (sub) => {
+        let imageUrl = null
+        if (sub.image_path) {
+            // Try storage
+            // 1. Try Preview Path first
+            // Use stored thumbnail_path if available, otherwise fallback to convention
+            const previewPath = sub.thumbnail_path || sub.image_path.replace('uploads/', 'previews/')
+            const { data: previewData } = await adminDb.storage
+                .from('submissions')
+                .createSignedUrl(previewPath, 3600)
+
+            if (previewData?.signedUrl) {
+                imageUrl = previewData.signedUrl
+            } else {
+                // 2. Fallback to Original
+                const { data: originalData } = await adminDb.storage
+                    .from('submissions')
+                    .createSignedUrl(sub.image_path, 3600)
+
+                if (originalData?.signedUrl) {
+                    imageUrl = originalData.signedUrl
+                }
+            }
+        }
+        return {
+            ...sub,
+            signedUrl: imageUrl
+        }
+    }))
+
+    return submissionsWithImages
 }

@@ -99,8 +99,33 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
     .eq('id', id)
     .single()
 
+
   if (!submissionRecord) {
      return notFound()
+  }
+
+  // 5. Auth Context & Security Guard (Moved Up)
+  const supabaseAuth = createClient()
+  const { data: { user } } = await (await supabaseAuth).auth.getUser()
+
+  let userCredits = 0
+  let isAdmin = false
+  
+  if (user) {
+      // Fetch Credits & Admin Status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('credits_balance, is_admin')
+        .eq('id', user.id)
+        .single()
+      
+      userCredits = profile?.credits_balance || 0
+      isAdmin = profile?.is_admin || false
+  }
+
+  // Soft Delete Check
+  if (submissionRecord.deleted_at && !isAdmin) {
+      return notFound()
   }
 
   // Handle Error/Processing States
@@ -168,34 +193,15 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
       }
   }
 
-  // 5. Auth Context & Security Guard
-  const supabaseAuth = createClient()
-  const { data: { user } } = await (await supabaseAuth).auth.getUser()
 
-  let userCredits = 0
-  let isAdmin = false
-  
-  if (user) {
-      // Fetch Credits & Admin Status
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('credits_balance, is_admin')
-        .eq('id', user.id)
-        .single()
-      
-      userCredits = profile?.credits_balance || 0
-      isAdmin = profile?.is_admin || false
-      
-      // Claim Submission if Guest (orphaned) AND not visiting as an admin (unless they are claiming it for themselves logic, but admin viewing shouldn't claim)
-      // Claim Submission if Guest (orphaned) AND not visiting as an admin
-      if (!submissionRecord.user_id && !isAdmin) {
-          await supabase
-            .from('submissions')
-            .update({ user_id: user.id })
-            .eq('id', id)
-            
-          submissionRecord.user_id = user.id // Update local record to reflect claim
-      }
+  // Claim Submission if Guest (orphaned) AND not visiting as an admin
+  if (user && !submissionRecord.user_id && !isAdmin) {
+      await supabase
+        .from('submissions')
+        .update({ user_id: user.id })
+        .eq('id', id)
+        
+      submissionRecord.user_id = user.id // Update local record to reflect claim
   }
 
   // Security Check: Access Control
