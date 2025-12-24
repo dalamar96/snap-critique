@@ -118,8 +118,8 @@ export function UploadZone() {
       
       {/* Status Footer */}
       <div className="absolute bottom-0 inset-x-0 bg-white/5 p-2 flex justify-between font-mono text-[10px] text-white/40 uppercase">
-         <span>Format: JPG/PNG</span>
-         <span>Max: 20MB</span>
+         <span className="pl-8">Format: JPG/PNG</span>
+         <span className="pr-10">Max: 20MB</span>
       </div>
     </div>
   )

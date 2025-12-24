@@ -112,9 +112,46 @@ export default function AboutPage() {
                        <h3 className="font-bold flex items-center gap-2 mb-4 uppercase tracking-wider text-slate-300 text-sm border-b border-white/10 pb-2">
                         <Star className="w-4 h-4 text-yellow-500"/> Technical Details
                        </h3>
-                       <p className="text-slate-400 text-xs leading-relaxed">
+                       <p className="text-slate-400 text-xs leading-relaxed mb-4">
                          Exposure is correctly prioritized for the highlights to prevent &apos;clipping&apos; while allowing the shadows to fall to pure black. The high level of grain/noise adds a filmic grit.
                        </p>
+
+                       <div className="grid grid-cols-2 gap-y-3 gap-x-8 text-xs border-t border-white/10 pt-4">
+                           {/* Example Data */}
+                           <div className="col-span-2 flex justify-between text-slate-500 border-b border-white/5 pb-2">
+                               <span>Camera</span>
+                               <span className="text-white font-mono text-right">Sony A7IV</span>
+                           </div>
+                           <div className="col-span-2 flex justify-between text-slate-500 border-b border-white/5 pb-2">
+                               <span>Lens</span>
+                               <span className="text-white font-mono text-right">FE 55mm f/1.8 ZA</span>
+                           </div>
+
+                           <div className="flex justify-between text-slate-500">
+                               <span>Focal Length</span>
+                               <span className="text-white font-mono">55mm</span>
+                           </div>
+                           <div className="flex justify-between text-slate-500">
+                               <span>Aperture</span>
+                               <span className="text-white font-mono">f/2.8</span>
+                           </div>
+                           <div className="flex justify-between text-slate-500">
+                               <span>Shutter</span>
+                               <span className="text-white font-mono">1/200s</span>
+                           </div>
+                           <div className="flex justify-between text-slate-500">
+                               <span>ISO</span>
+                               <span className="text-white font-mono">400</span>
+                           </div>
+                           <div className="flex justify-between text-slate-500">
+                               <span>Exp. Comp</span>
+                               <span className="text-white font-mono">-0.7</span>
+                           </div>
+                           <div className="flex justify-between text-slate-500">
+                               <span>Metering</span>
+                               <span className="text-white font-mono">Spot</span>
+                           </div>
+                       </div>
                     </div>
                  </div>
 

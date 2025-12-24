@@ -94,7 +94,7 @@ export function QuestionnaireWizard() {
           <div>
             <h1 className="text-sm text-primary uppercase tracking-widest mb-1">Critique Setup</h1>
             <div className="text-2xl font-bold bg-black inline-block text-white">
-               STEP_0{step} / 03
+               STEP 0{step} / 03
             </div>
           </div>
           <div className="flex gap-1">
