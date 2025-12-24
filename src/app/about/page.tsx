@@ -291,7 +291,7 @@ export default function AboutPage() {
       <section className="py-20 border-t border-white/10">
           <div className="container px-4 mx-auto text-center">
              <h2 className="text-3xl font-bold text-white mb-6">Ready to improve your photography?</h2>
-             <Link href="/login?view=signup" className="inline-flex items-center gap-2 text-primary hover:text-white transition-colors text-lg font-mono uppercase tracking-widest border-b border-primary hover:border-white pb-1">
+             <Link href="/" className="inline-flex items-center gap-2 text-primary hover:text-white transition-colors text-lg font-mono uppercase tracking-widest border-b border-primary hover:border-white pb-1">
                 Start your first analysis <ArrowRight className="w-5 h-5" />
              </Link>
           </div>
