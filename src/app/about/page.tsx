@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Check, Camera, Cpu, Zap, Star, ShieldCheck, Sparkles, Grid, User, Users } from 'lucide-react'
+import { ArrowRight, Check, Camera, Cpu, Zap, Star, ShieldCheck, Sparkles, Grid, User, Users, MapPin, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const metadata = {
@@ -287,6 +287,89 @@ export default function AboutPage() {
                 </div>
              </div>
           </div>
+        </div>
+      </section>
+
+      {/* Collaborative Critique Section */}
+      <section className="py-20 border-t border-white/5 bg-black relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        
+        <div className="container px-4 mx-auto">
+            <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24">
+                
+                {/* Visuals */}
+                <div className="flex-1 w-full relative">
+                    {/* Mock Comment Thread */}
+                    <div className="relative z-10 space-y-4 max-w-md mx-auto md:ml-auto">
+                        {/* Pinned Comment Bubble */}
+                        <div className="bg-slate-900 border border-white/10 p-4 rounded-xl shadow-2xl rounded-bl-none transform translate-x-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center text-[10px] font-bold">JD</div>
+                                    <span className="text-xs font-bold text-white">Jane Doe</span>
+                                </div>
+                                <span className="text-[10px] bg-orange-500 text-white px-1.5 py-0.5 rounded font-bold uppercase">Critique</span>
+                            </div>
+                            <p className="text-sm text-slate-300">The eye contact here is intense, but the hair light feels a bit too cool compared to the warmth of the face.</p>
+                        </div>
+                        
+                         {/* Reply */}
+                        <div className="bg-slate-800 border border-white/10 p-4 rounded-xl shadow-xl rounded-tr-none transform -translate-x-4 opacity-70">
+                             <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-[10px] font-bold">ME</div>
+                                    <span className="text-xs font-bold text-white">You</span>
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-400">Good catch! I mixed daylight and tungsten. I'll gel it next time.</p>
+                        </div>
+                    </div>
+
+                    {/* Pin Graphic */}
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-80 h-80 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
+                </div>
+
+                {/* Text Content */}
+                <div className="flex-1 w-full text-left">
+                    <div className="inline-flex items-center gap-2 text-primary font-bold uppercase tracking-widest mb-4">
+                        <Users className="w-4 h-4" /> 
+                        Collaborative Feedback
+                    </div>
+                    <h2 className="text-3xl md:text-5xl font-black text-white uppercase mb-6 leading-tight">
+                        Don't Critique Alone.
+                    </h2>
+                    <p className="text-slate-400 text-lg leading-relaxed mb-8 max-w-lg">
+                        AI provides the baseline, but the community provides the nuance. Invite friends, mentors, or the public to review your shots.
+                    </p>
+
+                    <div className="space-y-8">
+                        <div className="flex gap-4">
+                            <div className="w-12 h-12 rounded bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                <MapPin className="w-6 h-6 text-primary" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white uppercase mb-2">Pinpoint Precision</h3>
+                                <p className="text-slate-400 text-sm">
+                                    Stop explaining "that blurry part in the top left." <strong className="text-white">Click anywhere on the image</strong> to drop a pin and leave a context-aware comment exactly where it matters.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                             <div className="w-12 h-12 rounded bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                <MessageSquare className="w-6 h-6 text-blue-500" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white uppercase mb-2">Structured Discussions</h3>
+                                <p className="text-slate-400 text-sm">
+                                    Categorize comments as <span className="text-green-500">Praise</span>, <span className="text-orange-500">Critique</span>, or <span className="text-blue-500">Suggestion</span> to keep feedback constructive and organized.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
       </section>
 
