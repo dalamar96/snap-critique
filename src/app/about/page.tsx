@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Check, Camera, Cpu, Zap, Star, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Camera, Cpu, Zap, Star, ShieldCheck, Sparkles, Grid, User, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const metadata = {
@@ -235,10 +235,12 @@ export default function AboutPage() {
                 
                 {/* 1. Score & Summary */}
                 <div className="space-y-4">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
-                        <Star className="w-6 h-6" />
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shrink-0">
+                            <Star className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white uppercase">Objective Scoring</h3>
                     </div>
-                    <h3 className="text-2xl font-bold text-white uppercase">Objective Scoring</h3>
                     <p className="text-slate-400 leading-relaxed text-lg">
                         We don&apos;t just say &quot;nice shot.&quot; You get a concrete <span className="text-primary font-bold">Composition Score (0-100)</span> and a summarized breakdown of the artistic intent, helping you understand how your image lands at a glance.
                     </p>
@@ -246,10 +248,12 @@ export default function AboutPage() {
 
                 {/* 2. Technical */}
                 <div className="space-y-4">
-                    <div className="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 text-yellow-500">
-                        <Camera className="w-6 h-6" />
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 text-yellow-500 shrink-0">
+                            <Camera className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white uppercase">Technical Deep Dive</h3>
                     </div>
-                    <h3 className="text-2xl font-bold text-white uppercase">Technical Deep Dive</h3>
                     <p className="text-slate-400 leading-relaxed text-lg">
                         Our AI simulates a technical inspection, analyzing <strong>Exposure</strong>, <strong>Focus</strong>, <strong>Grain</strong>, and <strong>Lighting</strong>. We point out what techniques were used successfully and where the technical execution could be tightened.
                     </p>
@@ -257,10 +261,12 @@ export default function AboutPage() {
 
                 {/* 3. Improvements */}
                 <div className="space-y-4">
-                    <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-500">
-                        <ShieldCheck className="w-6 h-6" />
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-500 shrink-0">
+                            <ShieldCheck className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white uppercase">Prioritized Feedback</h3>
                     </div>
-                    <h3 className="text-2xl font-bold text-white uppercase">Prioritized Feedback</h3>
                     <p className="text-slate-400 leading-relaxed text-lg">
                         The core of Snap Critique. We identify specific areas that distract from your subject, ranked by priority. Whether it's a <span className="text-red-500 font-bold">High Priority</span> pose adjustment or a subtle lighting tweak, you'll know exactly what to fix.
                     </p>
@@ -268,16 +274,72 @@ export default function AboutPage() {
 
                 {/* 4. Action Plan */}
                 <div className="space-y-4">
-                    <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20 text-orange-500">
-                        <Zap className="w-6 h-6" />
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20 text-orange-500 shrink-0">
+                            <Zap className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white uppercase">Your Homework</h3>
                     </div>
-                    <h3 className="text-2xl font-bold text-white uppercase">Your Homework</h3>
+                    
                     <p className="text-slate-400 leading-relaxed text-lg">
                         Feedback is useless without action. We generate a tailored <strong>Action Plan</strong> with specific exercises or experiments you can try immediately to improve your next shot.
                     </p>
                 </div>
              </div>
           </div>
+        </div>
+      </section>
+
+
+      {/* Community Section */}
+      <section className="py-20 border-t border-white/5 bg-slate-900/30">
+        <div className="container px-4 mx-auto text-center mb-16">
+             <div className="inline-block text-primary font-bold uppercase tracking-widest mb-4 border-b border-primary/20 pb-1">Community</div>
+             <h2 className="text-3xl md:text-5xl font-black text-white uppercase">More Than Just AI.</h2>
+        </div>
+
+        <div className="container px-4 mx-auto grid md:grid-cols-3 gap-8">
+             {/* Gallery */}
+             <div className="bg-black border border-white/10 p-8 rounded-xl relative overflow-hidden group hover:border-primary/50 transition-colors">
+                 <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-6 text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                     <Grid className="w-6 h-6" />
+                 </div>
+                 <h3 className="text-xl font-bold text-white uppercase mb-4">Public Gallery</h3>
+                 <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                     Choose which analyses to make public. Showcase your best shots and see how others are scoring.
+                 </p>
+                 <Link href="/gallery" className="text-purple-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
+                    Explore Gallery <ArrowRight className="w-4 h-4" />
+                 </Link>
+             </div>
+
+             {/* Profiles */}
+             <div className="bg-black border border-white/10 p-8 rounded-xl relative overflow-hidden group hover:border-primary/50 transition-colors">
+                 <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center mb-6 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                     <User className="w-6 h-6" />
+                 </div>
+                 <h3 className="text-xl font-bold text-white uppercase mb-4">Photographer Profiles</h3>
+                 <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                     Build your portfolio. Share your bio, gear, and favorite shots with a dedicated public profile page.
+                 </p>
+                 <div className="text-blue-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    Build Your Brand
+                 </div>
+             </div>
+
+             {/* Community */}
+             <div className="bg-black border border-white/10 p-8 rounded-xl relative overflow-hidden group hover:border-primary/50 transition-colors">
+                 <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center mb-6 text-green-500 group-hover:bg-green-500 group-hover:text-white transition-colors">
+                     <Users className="w-6 h-6" />
+                 </div>
+                 <h3 className="text-xl font-bold text-white uppercase mb-4">Community Connect</h3>
+                 <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                     Discover other photographers by camera brand or style. Find inspiration and connect with peers.
+                 </p>
+                 <Link href="/community" className="text-green-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
+                    Meet the Community <ArrowRight className="w-4 h-4" />
+                 </Link>
+             </div>
         </div>
       </section>
 
