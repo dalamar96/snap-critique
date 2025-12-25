@@ -120,5 +120,6 @@ export async function togglePublicStatus(submissionId: string, isPublic: boolean
     }
 
     revalidatePath(`/analysis/${submissionId}`)
+    revalidatePath('/sitemap.xml')
     return { success: true }
 }
