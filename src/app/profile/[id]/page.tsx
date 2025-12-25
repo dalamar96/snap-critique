@@ -29,8 +29,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         .select('*')
         .eq('id', id)
         .single()
-    
-     console.log('Fetched Profile:', profile)
+
 
      if (!profile) return notFound()
 
@@ -90,12 +89,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     // Avatar Signed URL
     let avatarSrc = profile.avatar_url
     if (profile.avatar_url && !profile.avatar_url.startsWith('http')) {
-        console.log('Signing Avatar:', profile.avatar_url)
         const { data, error } = await supabase.storage.from('submissions').createSignedUrl(profile.avatar_url, 3600)
         if (error) console.error('Sign Error:', error)
         if (data?.signedUrl) {
             avatarSrc = data.signedUrl
-            console.log('Signed URL:', data.signedUrl)
         }
     }
 
