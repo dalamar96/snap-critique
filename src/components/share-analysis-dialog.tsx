@@ -84,7 +84,7 @@ export function ShareAnalysisDialog({ submissionId, initialIsPublic, trigger }: 
                         {isPublic ? "Public Access" : "Private Access"}
                     </div>
                     <p className="text-xs text-slate-400">
-                        {isPublic ? "Anyone with the link can view this." : "Only you can view this analysis."}
+                        {isPublic ? "Anyone with the link can view this. It will also appear in the 'Explore' gallery." : "Only you can view this analysis."}
                     </p>
                 </div>
                 <Switch 

@@ -132,6 +132,7 @@ export async function POST(req: NextRequest) {
       - title: specific to the subject
       - scores: { composition: 0-100, technique: 0-100, creativity: 0-100, overall: 0-100 }
       - nsfw_score: 0-100 (likelihood of NSFW content or nudity. 0 = clean, 100 = explicit)
+      - ai_generated_score: 0-100 (likelihood of AI generation. 0 = real photo, 100 = definitely AI)
       - description: 1-2 sentence aesthetic summary
       - strengths: array of 2-3 strings
       - improvements: array of objects { title, description, priority: 'high'|'medium'|'low' }

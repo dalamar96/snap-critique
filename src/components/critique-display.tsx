@@ -23,6 +23,7 @@ interface AnalysisResult {
     overall: number
   }
   nsfw_score?: number
+  ai_generated_score?: number
   description: string
   strengths: string[]
   improvements: AssessmentItem[]
@@ -220,6 +221,11 @@ export function CritiqueDisplay({
                 {(analysis.nsfw_score || 0) > 74 && (
                     <span className="bg-red-500 text-black px-1.5 font-bold rounded">
                         NSFW: {analysis.nsfw_score}%
+                    </span>
+                )}
+                 {(analysis.ai_generated_score || 0) > 50 && (
+                    <span className="bg-purple-500 text-white px-1.5 font-bold rounded">
+                        AI: {analysis.ai_generated_score}%
                     </span>
                 )}
             </div>

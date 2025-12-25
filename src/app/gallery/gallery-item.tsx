@@ -13,6 +13,7 @@ interface GalleryItemProps {
         submission_id: string
         imageUrl: string
         nsfw_score?: number
+        ai_generated_score?: number
     }
 }
 
@@ -93,6 +94,15 @@ export function GalleryItem({ item }: GalleryItemProps) {
                         </div>
                     </div>
                 </div>
+
+                {/* AI Tag - Top Right of Card */}
+                {(item.ai_generated_score || 0) > 50 && (
+                        <div className="absolute top-2 right-2 z-10">
+                        <span className="bg-purple-500/90 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg border border-purple-400/50">
+                            AI
+                        </span>
+                        </div>
+                )}
             </Link>
         </div>
     )

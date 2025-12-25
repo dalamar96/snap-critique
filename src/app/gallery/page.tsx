@@ -91,7 +91,8 @@ export default async function GalleryPage() {
                         score: item.score,
                         submission_id: item.submission_id,
                         imageUrl: item.imageUrl,
-                        nsfw_score: item.nsfw_score
+                        nsfw_score: item.nsfw_score,
+                        ai_generated_score: item.full_critique?.ai_generated_score
                     }} />
                 ))}
             </div>
