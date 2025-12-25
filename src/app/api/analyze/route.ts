@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
       Provide the response in ANY valid JSON format. Do NOT use markdown code blocks.
       The JSON structure must include:
       - title: specific to the subject
-      - score: 0-100 overall
+      - scores: { composition: 0-100, technique: 0-100, creativity: 0-100, overall: 0-100 }
       - description: 1-2 sentence aesthetic summary
       - strengths: array of 2-3 strings
       - improvements: array of objects { title, description, priority: 'high'|'medium'|'low' }
@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
             preview_text: analysisData.preview_summary,
             title: analysisData.title,
             is_unlocked: !!user, // Unlocked if user exists (and paid via credit)
-            score: analysisData.score // Denormalize score for easy sorting if needed
+            score: analysisData.scores?.overall || analysisData.score // Handle both new and potentially old/fallback formats
         };
 
         const { error: analysisError } = await supabase

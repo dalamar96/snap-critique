@@ -66,11 +66,40 @@ export default function AboutPage() {
                       </p>
                     </div>
                     
-                    <div className="flex flex-col items-end gap-4 min-w-[120px]">
+                    <div className="flex flex-col items-end gap-2 min-w-[120px]">
                         <div className="flex flex-col items-center border border-white/10 bg-white/5 p-4 w-full text-center">
-                           <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Score</span>
+                           <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Overall</span>
                            <div className="text-5xl font-black text-primary">82</div>
                         </div>
+                         <div className="grid grid-cols-3 gap-2 w-full mt-2">
+                             <div className="text-center group relative cursor-help">
+                                 <div className="text-sm font-bold text-white">85</div>
+                                 <div className="text-[8px] uppercase text-slate-500">Comp</div>
+                                 {/* Tooltip */}
+                                <div className="absolute bottom-full mb-2 w-32 left-1/2 -translate-x-1/2 bg-black border border-white/20 p-2 text-[10px] text-slate-300 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 text-center pointer-events-none">
+                                    Framing, balance, & visual flow.
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-white/20" />
+                                </div>
+                             </div>
+                             <div className="text-center group relative cursor-help">
+                                 <div className="text-sm font-bold text-white">78</div>
+                                 <div className="text-[8px] uppercase text-slate-500">Tech</div>
+                                 {/* Tooltip */}
+                                <div className="absolute bottom-full mb-2 w-32 left-1/2 -translate-x-1/2 bg-black border border-white/20 p-2 text-[10px] text-slate-300 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 text-center pointer-events-none">
+                                    Exposure, focus, & camera settings.
+                                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-white/20" />
+                                </div>
+                             </div>
+                             <div className="text-center group relative cursor-help">
+                                 <div className="text-sm font-bold text-white">84</div>
+                                 <div className="text-[8px] uppercase text-slate-500">Create</div>
+                                 {/* Tooltip */}
+                                <div className="absolute bottom-full mb-2 w-32 left-1/2 -translate-x-1/2 bg-black border border-white/20 p-2 text-[10px] text-slate-300 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 text-center pointer-events-none">
+                                    Originality, story, & choices.
+                                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-white/20" />
+                                </div>
+                             </div>
+                         </div>
                     </div>
                  </div>
 

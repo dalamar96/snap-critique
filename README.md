@@ -1,36 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Snap Critique 📸
 
-## Getting Started
+**Snap Critique** is an AI-powered photography mentoring platform that provides instant, detailed, and objective feedback on your photos. It acts as a world-class photography instructor, analyzing your images for composition, lighting, and technical execution to help you improve faster.
 
-First, run the development server:
+## 🚀 Features
+
+### core Experience
+- **AI Analysis**: Uses Google Gemini Pro Vision to analyze images across 4 dimensions:
+  - **Composition Score**: An objective 0-100 rating based on artistic principles.
+  - **Technical Assessment**: Analysis of exposure, focus, noise, and lighting consistency.
+  - **Strengths**: Highlights what works well in the image.
+  - **Improvements**: Priority-ranked suggestions for what to fix (High/Medium/Low).
+  - **Action Plan**: Tailored drills and homework to practice.
+- **EXIF Data Extraction**: Automatically extracts and displays camera settings (Camera, Lens, ISO, Aperture, Shutter, Metering, Flash, etc.) to give context to the critique.
+- **Smart Upload**: Drag-and-drop interface with instant previews and validation.
+
+### Platform Features
+- **Credit System**: 
+  - New users get 5 free credits.
+  - One-time credit packs available via Stripe (no subscriptions).
+  - Credits are deducted only for successful analyses.
+- **Dashboard**: Central hub to manage all previous critiques.
+  - **Search & Filter**: Find analyses by status or privacy.
+  - **Soft Delete**: Remove analyses from view without permanent data loss (recoverable by admins).
+  - **Privacy Control**: Toggle analyses between Private (owner only) and Public.
+- **Sharing**: Generate public links to share critiques with friends or on social media.
+- **Admin Panel**:
+    - User management table.
+    - Global view of all submissions.
+    - Status monitoring (Deleted/Public/Private).
+- **Google Analytics**: Integrated visitor tracking.
+
+## 🛠️ Technology Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router, Server Actions)
+- **Language**: TypeScript
+- **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL, Row Level Security)
+- **AI Model**: [Google Gemini Pro Vision](https://deepmind.google/technologies/gemini/)
+- **Styling**: Tailwind CSS + Shadcn/UI (Radix Primitives)
+- **Payments**: Stripe (Webhooks for credit fulfillment)
+- **Analytics**: Google Analytics 4
+
+## 📂 Project Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+/src
+├── app
+│   ├── admin           # Admin dashboard & users table
+│   ├── analysis        # Dynamic analysis pages & server actions
+│   ├── api             # API Routes (Analyze, Stripe Webhooks)
+│   ├── dashboard       # User dashboard
+│   ├── (auth)          # Login/Signup pages
+│   └── layout.tsx      # Root layout (Fonts, GA, Header)
+├── components          # Reusable UI components
+│   ├── critique-display.tsx # Main analysis visualization
+│   ├── upload-zone.tsx      # Drag & drop uploader
+│   └── ...
+├── lib
+│   ├── gemini.ts       # AI Model configuration
+│   ├── supabase        # Database clients (Admin/Client)
+│   └── utils.ts        # CN & formatting helpers
+└── types               # TypeScript interfaces
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ⚡ Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
+- Node.js 18+
+- Supabase Account
+- Google AI Studio Key (Gemini)
+- Stripe Account
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Environment Variables
+Create a `.env.local` file:
 
-## Learn More
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-To learn more about Next.js, take a look at the following resources:
+# Google AI
+GEMINI_API_KEY=your_gemini_key
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# App
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+```
 
-## Deploy on Vercel
+### Installation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Install dependencies:
+```bash
+npm install
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2. Run the development server:
+```bash
+npm run dev
+```
+
+3. Open [http://localhost:3000](http://localhost:3000)
+
+## 🔒 Security
+
+- **Row Level Security (RLS)**: All database access is scoped to the authenticated user.
+- **Server Actions**: All mutations happen server-side with strict validation.
+- **Signed URLs**: Private images are accessed via short-lived signed URLs.
+
+---
+Built with ❤️ for photographers.

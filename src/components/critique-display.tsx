@@ -16,6 +16,12 @@ interface AssessmentItem {
 interface AnalysisResult {
   title: string
   score: number
+  scores?: {
+    composition: number
+    technique: number
+    creativity: number
+    overall: number
+  }
   description: string
   strengths: string[]
   improvements: AssessmentItem[]
@@ -148,12 +154,58 @@ export function CritiqueDisplay({
           <p className="text-slate-400 max-w-xl border-l-2 border-white/10 pl-4 print:text-black print:border-black">{analysis.description}</p>
         </div>
         
-        <div className="flex flex-col items-end gap-4">
-            <div className="flex flex-col items-center border border-white/10 bg-white/5 p-6 min-w-[150px] print:border-black print:bg-transparent">
-               <span className="text-xs uppercase tracking-widest text-slate-500 mb-2 print:text-black">Composition Score</span>
-               <div className="text-6xl font-black text-primary print:text-black">{analysis.score}</div>
+        <div className="flex flex-col items-center md:items-end gap-6">
+            {/* Main Score Display */}
+            <div className="flex flex-col items-center border border-white/10 bg-white/5 p-6 w-64 text-center print:border-black print:bg-transparent">
+               <span className="text-xs uppercase tracking-widest text-slate-500 mb-2 print:text-black">Overall Score</span>
+               <div className="text-6xl font-black text-primary print:text-black">{analysis.score || analysis.scores?.overall}</div>
             </div>
-            <button onClick={handlePrint} className="flex items-center gap-2 text-xs uppercase tracking-widest text-slate-500 hover:text-white print:hidden">
+
+            {/* Score Breakdown (if available) - Centered under the main score */}
+            {analysis.scores && (
+                <div className="grid grid-cols-3 gap-2 w-64">
+                    <div className="flex flex-col items-center gap-1 group relative cursor-help">
+                        <div className="text-xl font-bold text-white">{analysis.scores.composition}</div>
+                        <span className="text-[10px] uppercase tracking-widest text-slate-500">Comp.</span>
+                        <div className="w-full h-1 bg-white/10 rounded-full mt-1">
+                            <div className="h-full bg-primary rounded-full" style={{ width: `${analysis.scores.composition}%` }} />
+                        </div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 w-32 bg-black border border-white/20 p-2 text-[10px] text-slate-300 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 text-center pointer-events-none">
+                            Framing, balance, & visual flow.
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-white/20" />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1 group relative cursor-help">
+                        <div className="text-xl font-bold text-white">{analysis.scores.technique}</div>
+                        <span className="text-[10px] uppercase tracking-widest text-slate-500">Tech.</span>
+                         <div className="w-full h-1 bg-white/10 rounded-full mt-1">
+                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${analysis.scores.technique}%` }} />
+                        </div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 w-32 bg-black border border-white/20 p-2 text-[10px] text-slate-300 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 text-center pointer-events-none">
+                            Exposure, focus, & camera settings.
+                             <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-white/20" />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1 group relative cursor-help">
+                        <div className="text-xl font-bold text-white">{analysis.scores.creativity}</div>
+                        <span className="text-[10px] uppercase tracking-widest text-slate-500">Create</span>
+                         <div className="w-full h-1 bg-white/10 rounded-full mt-1">
+                            <div className="h-full bg-purple-500 rounded-full" style={{ width: `${analysis.scores.creativity}%` }} />
+                        </div>
+                         {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 w-32 bg-black border border-white/20 p-2 text-[10px] text-slate-300 rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 text-center pointer-events-none">
+                            Originality, story, & choices.
+                             <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-white/20" />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <button onClick={handlePrint} className="flex items-center gap-2 text-xs uppercase tracking-widest text-slate-500 hover:text-white print:hidden w-64 justify-center">
                 <Terminal className="w-4 h-4" /> Print / Save PDF
             </button>
         </div>
