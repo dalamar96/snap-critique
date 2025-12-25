@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Sidebar, Activity, Users, Database, Globe, Search, Lock, Plus, Save } from 'lucide-react'
+import { Sidebar, Activity, Users, Database, Globe, Search, Lock, Plus, Save, List, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateSystemPrompt } from './actions'
 import { PromptForm } from './prompt-form'
@@ -94,6 +94,23 @@ export default async function AdminPage() {
              <KpiCard label="Completed" value={completedAnalyses} icon={<Activity className="w-5 h-5 text-green-500"/>} />
              <KpiCard label="Active Users" value={new Set(submissions?.map(s => s.user_id)).size || 0} icon={<Users className="w-5 h-5 text-orange-500"/>} />
              <KpiCard label="Est. Revenue" value={`$${unlockedRevenue.toFixed(2)}`} icon={<Search className="w-5 h-5 text-primary"/>} />
+          </div>
+          
+          {/* Management Section */}
+          <div>
+              <h2 className="text-xl font-bold uppercase mb-6 flex items-center gap-2">
+                <List className="w-5 h-5 text-primary" />
+                Management
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Link href="/admin/taxonomy" className="bg-black border border-white/10 p-6 rounded-lg hover:border-primary transition-colors flex items-center justify-between group">
+                    <div>
+                        <h3 className="text-lg font-bold text-white uppercase mb-1">Taxonomy</h3>
+                        <p className="text-slate-500 text-xs">Manage Brands & Types</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
+                </Link>
+              </div>
           </div>
 
           <div className="grid grid-cols-1 gap-12">

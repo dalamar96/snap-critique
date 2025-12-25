@@ -17,12 +17,20 @@ export default async function ProfileEditPage() {
   const [profileRes, brandsRes, typesRes] = await Promise.all([
       adminDb.from('profiles').select('*').eq('id', user.id).single(),
       adminDb.from('camera_brands').select('name').order('name'),
-      adminDb.from('photography_types').select('name').order('name')
+      adminDb.from('photography_types').select('id, name, parent_id, sort_order').order('sort_order', { ascending: true })
   ])
 
   const profile = profileRes.data
   const brands = (brandsRes.data || []).map(b => b.name)
-  const types = (typesRes.data || []).map(t => t.name)
+  // Pass full types object, not just names
+  const types = typesRes.data || []
+
+  // Sign Avatar URL if needed
+  let signedAvatarUrl = profile?.avatar_url || ''
+  if (profile?.avatar_url && !profile.avatar_url.startsWith('http')) {
+      const { data } = await supabase.storage.from('submissions').createSignedUrl(profile.avatar_url, 3600)
+      if (data?.signedUrl) signedAvatarUrl = data.signedUrl
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 p-6 md:p-12 font-mono text-slate-200">
@@ -32,6 +40,7 @@ export default async function ProfileEditPage() {
          <ProfileForm 
             user={user} 
             profile={profile} 
+            initialAvatarUrl={signedAvatarUrl}
             availableBrands={brands} 
             availableTypes={types} 
          />

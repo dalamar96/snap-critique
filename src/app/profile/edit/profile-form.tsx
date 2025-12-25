@@ -12,11 +12,19 @@ import { Camera, User, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
+interface TaxonomyType {
+    id: string
+    name: string
+    parent_id: string | null
+    sort_order: number
+}
+
 interface ProfileFormProps {
     user: any
     profile: any
+    initialAvatarUrl: string
     availableBrands: string[]
-    availableTypes: string[]
+    availableTypes: TaxonomyType[]
 }
 
 // Helper: Resize Image Client-Side
@@ -77,9 +85,9 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number): Promise<B
     });
 };
 
-export function ProfileForm({ user, profile, availableBrands, availableTypes }: ProfileFormProps) {
+export function ProfileForm({ user, profile, initialAvatarUrl, availableBrands, availableTypes }: ProfileFormProps) {
     const [isLoading, setIsLoading] = useState(false)
-    const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '')
+    const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
     const [avatarPath, setAvatarPath] = useState(profile?.avatar_url || '')
     const [isPublic, setIsPublic] = useState(!!profile?.is_public)
     const [uploading, setUploading] = useState(false)
@@ -220,22 +228,68 @@ export function ProfileForm({ user, profile, availableBrands, availableTypes }: 
                     </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-6">
                     <Label className="text-base text-white font-bold uppercase">Photography Types</Label>
                     <p className="text-xs text-slate-500">Select your areas of focus.</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {availableTypes.map(type => (
-                            <label key={type} className="flex items-center gap-2 bg-white/5 p-3 border border-white/10 rounded cursor-pointer hover:border-primary/50 transition-colors">
-                                <input 
-                                    type="checkbox" 
-                                    name="types" 
-                                    value={type}
-                                    defaultChecked={profile?.photography_types?.includes(type)}
-                                    className="accent-primary"
-                                />
-                                <span className="text-sm">{type}</span>
-                            </label>
-                        ))}
+                    
+                    <div className="space-y-8">
+                        {/* Level 1: Categories */}
+                        {availableTypes.filter(t => !t.parent_id).map(category => {
+                            const subTypes = availableTypes.filter(t => t.parent_id === category.id)
+                            
+                            return (
+                                <div key={category.id} className="space-y-3">
+                                    <h3 className="text-xs font-bold uppercase text-primary border-b border-white/10 pb-1 mb-2">
+                                        {category.name}
+                                    </h3>
+                                    
+                                    {/* Level 2: Sub-Categories or Items */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {/* Direct Children */}
+                                        {subTypes.map(sub => {
+                                             // Check for Level 3 (Grandchildren)
+                                             const grandChildren = availableTypes.filter(t => t.parent_id === sub.id)
+                                             
+                                             if (grandChildren.length > 0) {
+                                                 return (
+                                                     <div key={sub.id} className="col-span-2 md:col-span-4 bg-white/5 border border-white/10 p-4 rounded-lg space-y-3">
+                                                         <h4 className="text-xs font-bold text-slate-300 uppercase">{sub.name}</h4>
+                                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                            {grandChildren.map(gc => (
+                                                                <label key={gc.id} className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors">
+                                                                    <input 
+                                                                        type="checkbox" 
+                                                                        name="types" 
+                                                                        value={gc.name} // Storing Name string
+                                                                        defaultChecked={profile?.photography_types?.includes(gc.name)}
+                                                                        className="accent-primary"
+                                                                    />
+                                                                    <span className="text-xs text-slate-400">{gc.name}</span>
+                                                                </label>
+                                                            ))}
+                                                         </div>
+                                                     </div>
+                                                 )
+                                             }
+
+                                             // Standard Checkbox
+                                             return (
+                                                <label key={sub.id} className="flex items-center gap-2 bg-white/5 p-3 border border-white/10 rounded cursor-pointer hover:border-primary/50 transition-colors">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="types" 
+                                                        value={sub.name} // Storing Name string
+                                                        defaultChecked={profile?.photography_types?.includes(sub.name)}
+                                                        className="accent-primary"
+                                                    />
+                                                    <span className="text-sm">{sub.name}</span>
+                                                </label>
+                                             )
+                                        })}
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             </div>
