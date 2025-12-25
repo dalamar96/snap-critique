@@ -123,3 +123,72 @@ export async function togglePublicStatus(submissionId: string, isPublic: boolean
     revalidatePath('/sitemap.xml')
     return { success: true }
 }
+
+export async function addComment(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Unauthorized' }
+
+    const submissionId = formData.get('submission_id') as string
+    const text = formData.get('text') as string
+    const category = formData.get('category') as string
+    const locX = formData.get('location_x')
+    const locY = formData.get('location_y')
+
+    if (!text || !submissionId) return { error: 'Missing Required Fields' }
+
+    console.log(`[addComment] Attempting insert: user=${user.id}, sub=${submissionId}, cat=${category}`)
+
+    const { error } = await createAdminClient().from('comments').insert({
+        submission_id: submissionId,
+        user_id: user.id,
+        text,
+        category,
+        location_x: locX ? parseFloat(locX as string) : null,
+        location_y: locY ? parseFloat(locY as string) : null
+    })
+
+    if (error) {
+        console.error("Add Comment Error:", error)
+        return { error: `Failed to post comment: ${error.message}` }
+    }
+
+    console.log("Comment added successfully")
+
+    revalidatePath(`/analysis/${submissionId}`)
+    return { success: true }
+}
+
+export async function deleteComment(commentId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    // Check ownership
+    const { data: comment } = await supabase.from('comments').select('user_id, submission_id').eq('id', commentId).single()
+    if (!comment) return { error: 'Not found' }
+
+    // Check Admin Status
+    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+    const isAdmin = profile?.is_admin
+
+    // Verify Permission
+    if (comment.user_id !== user.id && !isAdmin) {
+        return { error: 'Unauthorized' }
+    }
+
+    // Use Admin Client to delete (bypasses RLS) to ensure Admins can always delete
+    // and to avoid complex RLS policies for "is_admin".
+    const adminDb = createAdminClient()
+    const { error } = await adminDb.from('comments').delete().eq('id', commentId)
+
+    if (error) {
+        console.error("Delete Comment Error:", error)
+        return { error: 'Failed to delete' }
+    }
+
+    revalidatePath(`/analysis/${comment.submission_id}`)
+    console.log(`[deleteComment] Successfully deleted comment ${commentId}`)
+    return { success: true }
+}

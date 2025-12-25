@@ -1,4 +1,4 @@
-import { CritiqueDisplay } from '@/components/critique-display'
+import { AnalysisContainer } from '@/components/analysis-container'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
@@ -60,6 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function ResultsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ unlocked?: string, session_id?: string }> }) {
+  console.log("Rendering ResultsPage")
   const { id } = await params
   const { session_id } = await searchParams
   
@@ -263,6 +264,39 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
     }
   }
 
+  const commentsResult = await supabase
+    .from('comments')
+    .select('*, profiles(full_name, avatar_url)')
+    .eq('submission_id', id)
+    .order('created_at', { ascending: true })
+
+  let comments = commentsResult.data || []
+
+  // Sign Avatar URLs for comments
+  if (comments.length > 0) {
+      comments = await Promise.all(comments.map(async (c: any) => {
+          if (c.profiles?.avatar_url && !c.profiles.avatar_url.startsWith('http')) {
+              const { data } = await supabase.storage
+                  .from('submissions')
+                  .createSignedUrl(c.profiles.avatar_url, 3600)
+              if (data?.signedUrl) {
+                  c.profiles.avatar_url = data.signedUrl
+              }
+          }
+          return c
+      }))
+  }
+
+  if (commentsResult.error) {
+      console.error("[ResultsPage] Comment Fetch Error:", commentsResult.error)
+  }
+
+  console.log(`[ResultsPage] Fetched ${comments.length} comments for ${id}`)
+
+  // 8. Auth for Comments (CurrentUser)
+  // We already have `user` from auth.getUser(), but we might want profile info for the 'You' avatar if strictly needed.
+  // For now, passing `user` object is enough for ID checks.
+  
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-12 md:py-24">
       <script
@@ -279,7 +313,8 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
               />
             )}
         </div>
-        <CritiqueDisplay 
+        
+        <AnalysisContainer 
             analysis={analysisData} 
             analysisId={id} 
             isUnlocked={isUnlocked} 
@@ -287,6 +322,8 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
             userCredits={userCredits}
             isGuest={!user}
             metadata={submissionRecord.metadata}
+            comments={comments || []}
+            currentUser={user}
         />
       </div>
     </div>

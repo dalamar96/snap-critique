@@ -5,7 +5,8 @@ import { motion } from 'framer-motion'
 import { Check, Star, AlertTriangle, ArrowRight, Lock, Terminal, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { unlockAnalysis } from '@/app/analysis/actions'
-
+import { InteractiveImage } from '@/components/comments/interactive-image'
+import { Comment } from '@/types/comments'
 
 interface AssessmentItem {
   title: string
@@ -43,7 +44,11 @@ export function CritiqueDisplay({
   imageUrl,
   userCredits = 0,
   isGuest = true,
-  metadata
+  metadata,
+  comments,
+  onImageClick,
+  activePin,
+  isPinning
 }: { 
   analysis: AnalysisResult, 
   analysisId?: string, 
@@ -51,7 +56,11 @@ export function CritiqueDisplay({
   imageUrl?: string | null,
   userCredits?: number,
   isGuest?: boolean,
-  metadata?: any
+  metadata?: any,
+  comments?: Comment[],
+  onImageClick?: (x: number, y: number) => void,
+  activePin?: { x: number, y: number } | null,
+  isPinning?: boolean
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
@@ -215,8 +224,15 @@ export function CritiqueDisplay({
 
       {imageUrl && (
         <div className="w-full h-64 md:h-96 border border-white/10 bg-black overflow-hidden group print:border-black relative">
-            <img src={imageUrl} alt="Analysis Subject" className="w-full h-full object-contain" />
-            <div className="absolute top-0 right-0 p-2 bg-black/50 backdrop-blur text-[10px] text-primary font-mono uppercase border-b border-l border-white/10 flex items-center gap-2">
+             <InteractiveImage 
+                src={imageUrl} 
+                comments={comments}
+                onImageClick={onImageClick}
+                activePin={activePin}
+                isPinning={isPinning}
+             />
+
+            <div className="absolute top-0 right-0 p-2 bg-black/50 backdrop-blur text-[10px] text-primary font-mono uppercase border-b border-l border-white/10 flex items-center gap-2 pointer-events-none">
                 Analyzed Image
                 {(analysis.nsfw_score || 0) > 74 && (
                     <span className="bg-red-500 text-black px-1.5 font-bold rounded">
