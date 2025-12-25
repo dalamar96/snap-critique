@@ -26,8 +26,11 @@ export async function Header() {
             <Link href="/about" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
                 About
             </Link>
-             <Link href="/gallery" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
+            <Link href="/gallery" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
                 Explore
+            </Link>
+             <Link href="/community" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
+                Community
             </Link>
             {user ? (
                 <>
@@ -35,12 +38,16 @@ export async function Header() {
                         <LayoutDashboard className="w-4 h-4" />
                         <span className="hidden sm:inline">Dashboard</span>
                     </Link>
+
+                    <Link href={`/profile/${user.id}`} className="text-sm font-mono text-slate-400 hover:text-white flex items-center gap-2 uppercase tracking-wider">
+                        <User className="w-4 h-4" />
+                        <span className="hidden sm:inline">Profile</span>
+                    </Link>
                     
                     {/* Sign Out Button (Form) */}
                     <form action={signout}>
                         <button className="text-sm font-mono text-red-500 hover:text-red-400 flex items-center gap-2 uppercase tracking-wider">
                             <LogOut className="w-4 h-4" />
-                            <span className="hidden sm:inline">Sign Out</span>
                         </button>
                     </form>
                 </>
