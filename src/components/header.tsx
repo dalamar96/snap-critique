@@ -26,6 +26,9 @@ export async function Header() {
             <Link href="/about" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
                 About
             </Link>
+             <Link href="/gallery" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
+                Explore
+            </Link>
             {user ? (
                 <>
                     <Link href="/dashboard" className="text-sm font-mono text-slate-400 hover:text-white flex items-center gap-2 uppercase tracking-wider">

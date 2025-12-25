@@ -22,6 +22,7 @@ interface AnalysisResult {
     creativity: number
     overall: number
   }
+  nsfw_score?: number
   description: string
   strengths: string[]
   improvements: AssessmentItem[]
@@ -214,8 +215,13 @@ export function CritiqueDisplay({
       {imageUrl && (
         <div className="w-full h-64 md:h-96 border border-white/10 bg-black overflow-hidden group print:border-black relative">
             <img src={imageUrl} alt="Analysis Subject" className="w-full h-full object-contain" />
-            <div className="absolute top-0 right-0 p-2 bg-black/50 backdrop-blur text-[10px] text-primary font-mono uppercase border-b border-l border-white/10">
+            <div className="absolute top-0 right-0 p-2 bg-black/50 backdrop-blur text-[10px] text-primary font-mono uppercase border-b border-l border-white/10 flex items-center gap-2">
                 Analyzed Image
+                {(analysis.nsfw_score || 0) > 74 && (
+                    <span className="bg-red-500 text-black px-1.5 font-bold rounded">
+                        NSFW: {analysis.nsfw_score}%
+                    </span>
+                )}
             </div>
         </div>
       )}

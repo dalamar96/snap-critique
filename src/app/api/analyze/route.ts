@@ -131,6 +131,7 @@ export async function POST(req: NextRequest) {
       The JSON structure must include:
       - title: specific to the subject
       - scores: { composition: 0-100, technique: 0-100, creativity: 0-100, overall: 0-100 }
+      - nsfw_score: 0-100 (likelihood of NSFW content or nudity. 0 = clean, 100 = explicit)
       - description: 1-2 sentence aesthetic summary
       - strengths: array of 2-3 strings
       - improvements: array of objects { title, description, priority: 'high'|'medium'|'low' }
