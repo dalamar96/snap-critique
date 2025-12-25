@@ -66,8 +66,29 @@ export default async function GalleryPage() {
     })
   )
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Snap Critique Gallery',
+    description: 'Explore AI-analyzed photography critiques.',
+    url: `${process.env.NEXT_PUBLIC_SITE_URL}/gallery`,
+    hasPart: galleryItems.map(item => ({
+        '@type': 'Review',
+        name: `Critique for ${item.title}`,
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/analysis/${item.submission_id}`,
+        reviewRating: {
+            '@type': 'Rating',
+            ratingValue: item.score
+        }
+    }))
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         
         {/* Header */}
         <div className="pt-24 pb-12 text-center container px-4 mx-auto">

@@ -226,9 +226,49 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
 
   // Type assertion
   const analysisData = analysisRecord.full_critique as any 
+  
+  // JSON-LD Structured Data for SEO
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    itemReviewed: {
+        '@type': 'ImageObject',
+        name: analysisData.title,
+        contentUrl: imageUrl || undefined,
+        description: analysisData.description,
+        author: {
+            '@type': 'Person', // Assuming user photo
+            name: 'Photographer'
+        }
+    },
+    reviewRating: {
+        '@type': 'Rating',
+        ratingValue: analysisData.scores?.overall || analysisData.score,
+        bestRating: 100,
+        worstRating: 0
+    },
+    reviewBody: analysisData.preview_summary,
+    author: {
+        '@type': 'Organization',
+        name: 'Snap Critique AI',
+        url: process.env.NEXT_PUBLIC_SITE_URL
+    },
+    publisher: {
+        '@type': 'Organization',
+        name: 'Snap Critique',
+        logo: {
+            '@type': 'ImageObject',
+            url: `${process.env.NEXT_PUBLIC_SITE_URL}/icon.png`
+        }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-12 md:py-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-end mb-4">
             {/* Only show share button if user is owner or admin */}
