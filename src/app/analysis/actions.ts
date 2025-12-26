@@ -133,16 +133,18 @@ export async function addComment(formData: FormData) {
     const submissionId = formData.get('submission_id') as string
     const text = formData.get('text') as string
     const category = formData.get('category') as string
+    const parentId = formData.get('parent_id') as string
     const locX = formData.get('location_x')
     const locY = formData.get('location_y')
 
     if (!text || !submissionId) return { error: 'Missing Required Fields' }
 
-    console.log(`[addComment] Attempting insert: user=${user.id}, sub=${submissionId}, cat=${category}`)
+    console.log(`[addComment] Attempting insert: user=${user.id}, sub=${submissionId}, cat=${category}, parent=${parentId}`)
 
     const { error } = await createAdminClient().from('comments').insert({
         submission_id: submissionId,
         user_id: user.id,
+        parent_id: parentId || null,
         text,
         category,
         location_x: locX ? parseFloat(locX as string) : null,

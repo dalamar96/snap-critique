@@ -38,6 +38,7 @@ export function CommentSection({
     
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [category, setCategory] = useState<CommentType>('general')
+    const [replyingTo, setReplyingTo] = useState<string | null>(null)
     const formRef = useRef<HTMLFormElement>(null)
 
     // Auto-scroll to form when pin is dropped
@@ -47,7 +48,7 @@ export function CommentSection({
         }
     }, [activePin])
 
-    const handleSubmit = async (formData: FormData) => {
+    async function handlePost(formData: FormData) {
         if (!currentUser) return
         setIsSubmitting(true)
 
@@ -57,8 +58,12 @@ export function CommentSection({
             formData.set('location_y', activePin.y.toString())
         }
         
-        // Append Category
-        formData.set('category', category)
+        // Append Category (only for top level)
+        if (!formData.get('parent_id')) {
+             formData.set('category', category)
+        } else {
+             formData.set('category', 'general') // Replies are general by default or inherit? Let's say general.
+        }
 
         const result = await addComment(formData)
         
@@ -67,11 +72,15 @@ export function CommentSection({
             toast.error(result.error)
         } else {
             toast.success("Comment posted")
-            formRef.current?.reset()
-            onClearPin()
-            setCategory('general')
+            if (!formData.get('parent_id')) {
+                formRef.current?.reset()
+                onClearPin()
+                setCategory('general')
+            } else {
+                setReplyingTo(null)
+            }
         }
-    } 
+    }
 
     const handleDelete = async (id: string) => {
         if(!confirm("Delete comment?")) return
@@ -83,6 +92,98 @@ export function CommentSection({
             router.refresh()
         }
     }
+
+    // Recursive render function
+    const renderComment = (comment: Comment, depth = 0) => {
+        const isReply = depth > 0
+        const children = comments.filter(c => c.parent_id === comment.id)
+
+        return (
+            <div key={comment.id} className={cn("flex gap-4 group", isReply && "mt-4 ml-8 md:ml-12")}>
+                 <div className={cn(
+                     "shrink-0 rounded-full bg-white/5 overflow-hidden border border-white/10",
+                     isReply ? "w-8 h-8" : "w-10 h-10"
+                 )}>
+                    {comment.profiles?.avatar_url ? (
+                        <img src={comment.profiles.avatar_url} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-500"><User className={isReply ? "w-4 h-4" : "w-5 h-5"}/></div>
+                    )}
+                </div>
+                <div className="flex-1 space-y-1">
+                    <div className="flex items-baseline justify-between">
+                        <span className="font-bold text-white text-sm">{comment.profiles?.full_name || 'Anonymous'}</span>
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest" suppressHydrationWarning>
+                            {formatDistanceToNow(new Date(comment.created_at))} ago
+                        </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-1">
+                        {!isReply && CATEGORIES.find(c => c.id === comment.category) && (
+                                <span className={cn(
+                                    "text-[10px] uppercase font-bold px-1.5 py-0.5 rounded", 
+                                    CATEGORIES.find(c => c.id === comment.category)?.color
+                                )}>
+                                    {CATEGORIES.find(c => c.id === comment.category)?.label}
+                                </span>
+                        )}
+                        {comment.location_x && (
+                            <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                                <MapPin className="w-3 h-3" /> Pinned
+                            </span>
+                        )}
+                    </div>
+
+                    <p className="text-slate-300 text-sm leading-relaxed">{comment.text}</p>
+
+                    <div className="flex items-center justify-end gap-3 mt-2">
+                        {currentUser && (
+                            <button 
+                                onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                                className="text-[10px] text-slate-500 hover:text-white transition-colors font-bold uppercase tracking-wider"
+                            >
+                                Reply
+                            </button>
+                        )}
+                        {(currentUser?.id === comment.user_id || currentUser?.is_admin) && (
+                            <button onClick={() => handleDelete(comment.id)} className="text-[10px] text-red-500 hover:underline">
+                                Delete
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Reply Form */}
+                    {replyingTo === comment.id && (
+                        <form action={handlePost} className="mt-4 animate-in fade-in slide-in-from-top-2">
+                             <input type="hidden" name="submission_id" value={submissionId} />
+                             <input type="hidden" name="parent_id" value={comment.id} />
+                             <div className="flex gap-2">
+                                <input 
+                                    name="text" 
+                                    className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary"
+                                    placeholder="Write a reply..."
+                                    autoFocus
+                                    required
+                                />
+                                <button type="submit" disabled={isSubmitting} className="bg-white text-black text-xs font-bold uppercase px-3 rounded hover:bg-slate-200">
+                                    {isSubmitting ? '...' : 'Send'}
+                                </button>
+                             </div>
+                        </form>
+                    )}
+
+                    {/* Render Children */}
+                    {children.length > 0 && (
+                        <div className="border-l border-white/10 pl-0 mt-2">
+                            {children.map(child => renderComment(child, depth + 1))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
+    const topLevelComments = comments.filter(c => !c.parent_id)
 
     return (
         <div className="bg-black border border-white/10 p-6 md:p-8 space-y-8">
@@ -97,54 +198,12 @@ export function CommentSection({
                     <div className="text-slate-500 italic text-sm">No comments yet. Be the first to critique!</div>
                 )}
                 
-                {comments.map(comment => (
-                    <div key={comment.id} className="flex gap-4 group">
-                        <div className="shrink-0 w-10 h-10 rounded-full bg-white/5 overflow-hidden border border-white/10">
-                            {comment.profiles?.avatar_url ? (
-                                <img src={comment.profiles.avatar_url} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-slate-500"><User className="w-5 h-5"/></div>
-                            )}
-                        </div>
-                        <div className="flex-1 space-y-1">
-                            <div className="flex items-baseline justify-between">
-                                <span className="font-bold text-white text-sm">{comment.profiles?.full_name || 'Anonymous'}</span>
-                                <span className="text-[10px] text-slate-500 uppercase tracking-widest" suppressHydrationWarning>
-                                    {formatDistanceToNow(new Date(comment.created_at))} ago
-                                </span>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 mb-1">
-                                {CATEGORIES.find(c => c.id === comment.category) && (
-                                     <span className={cn(
-                                         "text-[10px] uppercase font-bold px-1.5 py-0.5 rounded", 
-                                         CATEGORIES.find(c => c.id === comment.category)?.color
-                                     )}>
-                                         {CATEGORIES.find(c => c.id === comment.category)?.label}
-                                     </span>
-                                )}
-                                {comment.location_x && (
-                                    <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
-                                        <MapPin className="w-3 h-3" /> Pinned
-                                    </span>
-                                )}
-                            </div>
-
-                            <p className="text-slate-300 text-sm leading-relaxed">{comment.text}</p>
-                            
-                            {(currentUser?.id === comment.user_id || currentUser?.is_admin) && (
-                                <button onClick={() => handleDelete(comment.id)} className="text-xs text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:underline pt-1">
-                                    Delete
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                {topLevelComments.map(comment => renderComment(comment))}
             </div>
 
-            {/* Form */}
+            {/* Main Form */}
             {currentUser ? (
-                <form ref={formRef} action={handleSubmit} className="border-t border-white/10 pt-6 space-y-4">
+                <form ref={formRef} action={handlePost} className="border-t border-white/10 pt-6 space-y-4">
                      <div className="flex items-start gap-4">
                         <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-black shrink-0">
                             You

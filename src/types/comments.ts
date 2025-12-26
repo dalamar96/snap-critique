@@ -8,6 +8,7 @@ export interface Comment {
     category: CommentType
     location_x?: number
     location_y?: number
+    parent_id?: string | null
     created_at: string
     profiles?: {
         full_name: string | null
