@@ -3,6 +3,8 @@ import { GoogleAnalytics } from '@next/third-parties/google'
 import { JetBrains_Mono, Inter } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
+import { CookieConsent } from '@/components/cookie-consent'
 
 const jetbrainsMono = JetBrains_Mono({ 
   subsets: ['latin'],
@@ -40,6 +42,8 @@ export default function RootLayout({
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground`} suppressHydrationWarning>
         <Header />
         {children}
+        <Footer />
+        <CookieConsent />
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
       </body>
     </html>

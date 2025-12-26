@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { MetadataRoute } from 'next'
 
-export const revalidate = 0 // Revalidate immediately for fresh SEO
+export const revalidate = 3600 // Revalidate immediately for fresh SEO
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = createAdminClient()
