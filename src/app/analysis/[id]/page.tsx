@@ -195,14 +195,19 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
   }
 
 
-  // Claim Submission if Guest (orphaned) AND not visiting as an admin
-  if (user && !submissionRecord.user_id && !isAdmin) {
+  // Claim Submission if Guest (orphaned) AND not visiting as an admin AND explicit claim intent
+  const { claim } = await searchParams
+  
+  if (user && !submissionRecord.user_id && !isAdmin && claim === 'true') {
       await supabase
         .from('submissions')
         .update({ user_id: user.id })
         .eq('id', id)
         
       submissionRecord.user_id = user.id // Update local record to reflect claim
+      
+      // Redirect to remove claim param
+      redirect(`/analysis/${id}`)
   }
 
   // Security Check: Access Control

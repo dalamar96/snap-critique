@@ -69,7 +69,7 @@ export function CritiqueDisplay({
      if (isGuest) {
          // Redirect to login with return path
          // We use window.location.pathname to return to this analysis page
-         window.location.href = `/login?view=signup&next=${encodeURIComponent(window.location.pathname)}`
+         window.location.href = `/login?view=signup&next=${encodeURIComponent(window.location.pathname + '?claim=true')}`
          return
      }
 
