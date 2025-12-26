@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .from('analyses')
         .select(`
         submission_id,
-        updated_at,
+        created_at,
         submissions!inner (
             deleted_at
         )
@@ -23,7 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const analysisUrls = (analyses || []).map((analysis) => ({
         url: `${baseUrl}/analysis/${analysis.submission_id}`,
-        lastModified: new Date(analysis.updated_at),
+        lastModified: new Date(analysis.created_at),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
     }))
