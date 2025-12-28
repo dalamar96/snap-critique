@@ -137,8 +137,16 @@ export async function getAdminDashboardData() {
         .select('user_id, id, created_at, deleted_at, analyses(is_unlocked)')
 
     // 2.1 Fetch Auth Users for Verification Status
-    const { data: { users: authUsers }, error: authError } = await adminDb.auth.admin.listUsers({ perPage: 1000 })
-    if (authError) console.error("Auth Fetch Error", authError)
+    // 2.1 Fetch Auth Users for Verification Status
+    let authUsers: any[] = []
+    try {
+        const { data, error: authError } = await adminDb.auth.admin.listUsers({ perPage: 1000 })
+        if (data?.users) authUsers = data.users
+        if (authError) console.error("Auth Fetch Error", authError)
+    } catch (e) {
+        console.error("Auth Fetch Critical Failure", e)
+        // Proceed without auth users (verification status will be unknown)
+    }
 
     // 3. Aggregate Stats per User
     const userStats = (profiles || []).map(p => {
@@ -380,9 +388,10 @@ export async function getErrorLogs(limit = 100) {
     const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
     if (!profile?.is_admin) throw new Error('Forbidden')
 
+    // 1. Fetch Logs (Raw)
     const { data: logs, error } = await adminDb
         .from('error_logs')
-        .select('*, profiles:user_id(email)')
+        .select('*')
         .order('timestamp', { ascending: false })
         .limit(limit)
 
@@ -391,7 +400,29 @@ export async function getErrorLogs(limit = 100) {
         return []
     }
 
-    return logs
+    if (!logs || logs.length === 0) return []
+
+    // 2. Manual Join for Profiles
+    const userIds = Array.from(new Set(logs.map(l => l.user_id).filter(Boolean)))
+
+    let profilesMap: Record<string, string> = {}
+
+    if (userIds.length > 0) {
+        const { data: profiles } = await adminDb
+            .from('profiles')
+            .select('id, email')
+            .in('id', userIds)
+
+        profiles?.forEach(p => {
+            profilesMap[p.id] = p.email
+        })
+    }
+
+    // 3. Merge
+    return logs.map(log => ({
+        ...log,
+        profiles: log.user_id ? { email: profilesMap[log.user_id] } : null
+    }))
 }
 
 
