@@ -7,12 +7,14 @@ import { UserTable } from './user-table'
 import { UnclaimedTable } from './unclaimed-table'
 import { AllAnalysesTable } from './all-analyses-table'
 import { ErrorLogTable } from './error-log-table'
+import { SupportInbox } from './support-inbox'
 
 interface DashboardData {
     users: any[]
     unclaimedCount: number
     totalRevenue: number
     recentErrors: number
+    supportUnreadCount: number
 }
 
 export function DashboardClient({ 
@@ -25,6 +27,7 @@ export function DashboardClient({
     const [showUnclaimed, setShowUnclaimed] = useState(false)
     const [showAllAnalyses, setShowAllAnalyses] = useState(false)
     const [showErrors, setShowErrors] = useState(false)
+    const [showMessages, setShowMessages] = useState(false)
 
     // Derived metrics
     const totalUsers = data.users.length
@@ -91,6 +94,24 @@ export function DashboardClient({
                     Management
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div onClick={() => setShowMessages(true)} className="cursor-pointer bg-black border border-white/10 p-6 rounded-lg hover:border-primary transition-colors flex items-center justify-between group relative overflow-hidden">
+                         <div>
+                             <h3 className="text-lg font-bold text-white uppercase mb-1 flex items-center gap-2">
+                                Support Inbox
+                                {data.supportUnreadCount > 0 && (
+                                    <span className="bg-pink-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">
+                                        {data.supportUnreadCount} New
+                                    </span>
+                                )}
+                             </h3>
+                             <p className="text-slate-500 text-xs">Reply to user messages</p>
+                         </div>
+                         <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
+                         {data.supportUnreadCount > 0 && (
+                             <div className="absolute top-0 right-0 w-2 h-2 bg-pink-500 rounded-full m-2"></div>
+                         )}
+                    </div>
+
                     <Link href="/admin/taxonomy" className="bg-black border border-white/10 p-6 rounded-lg hover:border-primary transition-colors flex items-center justify-between group">
                         <div>
                             <h3 className="text-lg font-bold text-white uppercase mb-1">Taxonomy</h3>
@@ -115,6 +136,7 @@ export function DashboardClient({
            <UnclaimedTable isOpen={showUnclaimed} onClose={() => setShowUnclaimed(false)} />
            <AllAnalysesTable isOpen={showAllAnalyses} onClose={() => setShowAllAnalyses(false)} />
            {showErrors && <ErrorLogTable onClose={() => setShowErrors(false)} />}
+           {showMessages && <SupportInbox onClose={() => setShowMessages(false)} />}
         </div>
     )
 }

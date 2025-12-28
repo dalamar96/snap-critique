@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Camera, LogOut, User, LayoutDashboard, Database } from 'lucide-react'
+import { Camera, LogOut, User, LayoutDashboard, Database, LifeBuoy } from 'lucide-react'
 import { signout } from '@/app/auth/actions'
 
 export async function Header() {
@@ -42,6 +42,11 @@ export async function Header() {
                     <Link href={`/profile/${user.id}`} className="text-sm font-mono text-slate-400 hover:text-white flex items-center gap-2 uppercase tracking-wider">
                         <User className="w-4 h-4" />
                         <span className="hidden sm:inline">Profile</span>
+                    </Link>
+
+                    <Link href="/support" className="text-sm font-mono text-slate-400 hover:text-white flex items-center gap-2 uppercase tracking-wider" title="Support">
+                        <LifeBuoy className="w-4 h-4" />
+                        <span className="hidden sm:inline">Support</span>
                     </Link>
                     
                     {/* Sign Out Button (Form) */}

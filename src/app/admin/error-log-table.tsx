@@ -1,7 +1,6 @@
-'use client'
-import { useState, useEffect } from 'react'
-import { getErrorLogs } from './actions'
-import { X, AlertTriangle, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react'
+import { useState, useEffect, Fragment } from 'react'
+import { getErrorLogs, deleteErrorLog } from './actions'
+import { X, AlertTriangle, RefreshCw, ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ErrorLog {
@@ -25,6 +24,15 @@ export function ErrorLogTable({ onClose }: { onClose: () => void }) {
         const data = await getErrorLogs(100)
         setLogs(data)
         setLoading(false)
+    }
+
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!confirm('Are you sure you want to delete this log?')) return
+        
+        // Optimistic update
+        setLogs(prev => prev.filter(l => l.id !== id))
+        await deleteErrorLog(id)
     }
 
     useEffect(() => {
@@ -64,13 +72,13 @@ export function ErrorLogTable({ onClose }: { onClose: () => void }) {
                                 <th className="p-3">Source</th>
                                 <th className="p-3">Message</th>
                                 <th className="p-3">User</th>
+                                <th className="p-3 w-10">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {logs.map(log => (
-                                <>
+                                <Fragment key={log.id}>
                                     <tr 
-                                        key={log.id} 
                                         onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
                                         className="hover:bg-white/5 cursor-pointer transition-colors"
                                     >
@@ -97,10 +105,19 @@ export function ErrorLogTable({ onClose }: { onClose: () => void }) {
                                         <td className="p-3 text-slate-400">
                                             {log.profiles?.email || '-'}
                                         </td>
+                                        <td className="p-3">
+                                            <button 
+                                                onClick={(e) => handleDelete(log.id, e)}
+                                                className="p-1 hover:bg-red-500/20 hover:text-red-500 rounded transition-colors text-slate-500"
+                                                title="Delete Log"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </td>
                                     </tr>
                                     {expandedLog === log.id && (
                                         <tr className="bg-black/40">
-                                            <td colSpan={6} className="p-4">
+                                            <td colSpan={7} className="p-4">
                                                 <div className="space-y-4">
                                                     {log.stack && (
                                                         <div>
@@ -122,7 +139,7 @@ export function ErrorLogTable({ onClose }: { onClose: () => void }) {
                                             </td>
                                         </tr>
                                     )}
-                                </>
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>

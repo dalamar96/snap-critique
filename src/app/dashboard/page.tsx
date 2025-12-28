@@ -87,6 +87,11 @@ export default async function DashboardPage() {
                         + Get More
                     </Link>
                 </div>
+                <div className="mt-2 text-right">
+                     <Link href="/support" className="text-[10px] text-slate-500 hover:text-white uppercase tracking-widest flex items-center justify-end gap-1">
+                        Need Help? 
+                     </Link>
+                </div>
              </div>
           </div>
 

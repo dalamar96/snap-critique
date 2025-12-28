@@ -140,12 +140,17 @@ export async function getAdminDashboardData() {
     // 2.1 Fetch Auth Users for Verification Status
     let authUsers: any[] = []
     try {
-        const { data, error: authError } = await adminDb.auth.admin.listUsers({ perPage: 1000 })
+        // Reduced page size to prevent JSON parsing errors on large payloads
+        const { data, error: authError } = await adminDb.auth.admin.listUsers({ page: 1, perPage: 100 })
         if (data?.users) authUsers = data.users
-        if (authError) console.error("Auth Fetch Error", authError)
-    } catch (e) {
-        console.error("Auth Fetch Critical Failure", e)
-        // Proceed without auth users (verification status will be unknown)
+        if (authError) console.warn("Auth Fetch Warning:", authError.message)
+    } catch (e: any) {
+        // Log less verbose error for JSON syntax issues
+        if (e.message?.includes('JSON')) {
+            console.warn("Auth Fetch Warning: Could not parse user list (JSON Error). Verification status may be incomplete.")
+        } else {
+            console.error("Auth Fetch Critical Failure", e)
+        }
     }
 
     // 3. Aggregate Stats per User
@@ -192,11 +197,19 @@ export async function getAdminDashboardData() {
         .select('*', { count: 'exact', head: true })
         .gte('timestamp', oneDayAgo)
 
+    // 7. Fetch Support Unread Count
+    const { count: unreadSupport } = await adminDb
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_from_admin', false)
+        .is('read_at', null)
+
     return {
         users: userStats,
         unclaimedCount: unclaimedSubs.length,
         totalRevenue: totalRevenueCents / 100,
-        recentErrors: errorCount || 0
+        recentErrors: errorCount || 0,
+        supportUnreadCount: unreadSupport || 0
     }
 }
 
@@ -423,6 +436,161 @@ export async function getErrorLogs(limit = 100) {
         ...log,
         profiles: log.user_id ? { email: profilesMap[log.user_id] } : null
     }))
+}
+
+export async function deleteErrorLog(logId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    // Verify admin
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    await adminDb.from('error_logs').delete().eq('id', logId)
+    revalidatePath('/admin')
+}
+
+// --- MESSAGING ---
+
+export async function getAllConversations() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    // Fetch all messages ordered by latest
+    const { data: messages, error } = await adminDb
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error('Failed to fetch conversations', error)
+        return []
+    }
+
+    // Group by user
+    const conversationsMap = new Map()
+
+    messages?.forEach(msg => {
+        if (!conversationsMap.has(msg.user_id)) {
+            conversationsMap.set(msg.user_id, {
+                userId: msg.user_id,
+                lastMessage: msg,
+                unreadCount: 0
+            })
+        }
+
+        const conv = conversationsMap.get(msg.user_id)
+        if (!msg.is_from_admin && !msg.read_at) {
+            conv.unreadCount++
+        }
+    })
+
+    const conversations = Array.from(conversationsMap.values())
+
+    // Fetch Emails
+    if (conversations.length > 0) {
+        const userIds = conversations.map(c => c.userId)
+        const { data: profiles } = await adminDb.from('profiles').select('id, email').in('id', userIds)
+
+        conversations.forEach(c => {
+            const p = profiles?.find(prof => prof.id === c.userId)
+            c.email = p?.email || 'Unknown User'
+        })
+    }
+
+    return conversations
+}
+
+export async function getConversation(targetUserId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    const { data: messages } = await adminDb
+        .from('messages')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .order('created_at', { ascending: true })
+
+    return messages || []
+}
+
+export async function replyToUser(targetUserId: string, content: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    await adminDb.from('messages').insert({
+        user_id: targetUserId,
+        content,
+        is_from_admin: true,
+        read_at: null
+    })
+
+    revalidatePath('/admin')
+}
+
+export async function markAdminRead(targetUserId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const adminDb = createAdminClient()
+    await adminDb
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('user_id', targetUserId)
+        .eq('is_from_admin', false)
+        .is('read_at', null)
+
+    revalidatePath('/admin')
+}
+
+export async function adminResolveConversation(targetUserId: string, status: 'open' | 'resolved') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    // Verify admin
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    await adminDb.from('conversation_status').upsert({
+        user_id: targetUserId,
+        status: status,
+        updated_at: new Date().toISOString()
+    })
+
+    revalidatePath('/admin')
+}
+
+export async function adminDeleteConversation(targetUserId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    // Verify admin
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    await adminDb.from('messages').delete().eq('user_id', targetUserId)
+    await adminDb.from('conversation_status').delete().eq('user_id', targetUserId)
+
+    revalidatePath('/admin')
 }
 
 
