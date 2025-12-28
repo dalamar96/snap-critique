@@ -6,6 +6,7 @@ import { stripe } from '@/lib/stripe'
 import { revalidatePath } from 'next/cache'
 import { ShareAnalysisDialog } from '@/components/share-analysis-dialog'
 import { Metadata } from 'next'
+import { cookies } from 'next/headers'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -74,16 +75,22 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
        console.log(`[Payment] Status: ${session.payment_status}`)
        
        if (session.payment_status === 'paid') {
-          const { error } = await supabase
-            .from('analyses')
-            .update({ is_unlocked: true })
-            .eq('submission_id', id)
-          
-          if (error) {
-             console.error("[Payment] DB Update Failed:", error)
-          } else {
-             console.log("[Payment] Unlock Successful")
-          }
+          // STRICT CHECK: Ensure this session was for THIS analysis
+          if (session.metadata?.analysisId !== id) {
+              console.error(`[Payment] Session ID mismatch/Replay attempt. Session AnalysisId: ${session.metadata?.analysisId}, Current: ${id}`)
+              // Do not unlock
+           } else {
+              const { error } = await supabase
+                .from('analyses')
+                .update({ is_unlocked: true })
+                .eq('submission_id', id)
+              
+              if (error) {
+                 console.error("[Payment] DB Update Failed:", error)
+              } else {
+                 console.log("[Payment] Unlock Successful")
+              }
+           }
        }
      } catch (e) {
        console.error("[Payment] Stripe Verification Failed", e)
@@ -197,8 +204,17 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
 
   // Claim Submission if Guest (orphaned) AND not visiting as an admin AND explicit claim intent
   const { claim } = await searchParams
+  const cookieStore = await cookies()
+  const guestToken = cookieStore.get(`guest_token_${id}`)?.value
+  const canClaim = guestToken === 'true'
   
   if (user && !submissionRecord.user_id && !isAdmin && claim === 'true') {
+      // Security Check: Verify they have the guest token
+      if (!canClaim) {
+          console.warn(`[Security] User ${user.id} attempted to claim ${id} without token`)
+          redirect(`/analysis/${id}`) 
+      }
+
       // 1. Check & Deduct Credits
       if (userCredits > 0) {
           // Attempt RPC (Atomic)
@@ -252,7 +268,26 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
   const isUnlocked = analysisRecord.is_unlocked || isOwner || isAdmin
 
   // Type assertion
-  const analysisData = analysisRecord.full_critique as any 
+  let analysisData = analysisRecord.full_critique as any 
+
+  // SECURITY: Sanitize data on server so it is not sent to client if locked
+  if (!isUnlocked) {
+      analysisData = {
+          ...analysisData,
+          strengths: ["Locked", "Locked", "Locked"],
+          technical_assessment: "This section is locked. Please unlock the full analysis to view detailed technical feedback.",
+          improvements: [], 
+          next_steps: [],
+          // Keep safe fields
+          preview_summary: analysisData.preview_summary || "",
+          scores: analysisData.scores,
+          score: analysisData.score,
+          title: analysisData.title,
+          description: analysisData.description,
+          nsfw_score: analysisData.nsfw_score,
+          ai_generated_score: analysisData.ai_generated_score
+      }
+  } 
   
   // JSON-LD Structured Data for SEO
   const jsonLd = {

@@ -227,8 +227,21 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Return the Submission ID to the frontend
-        return NextResponse.json({ success: true, id: submissionId });
+        // Return the Submission ID to the frontend (with Cookie for Guests)
+        const response = NextResponse.json({ success: true, id: submissionId });
+
+        if (!user) {
+            // Set simple ownership token for guest claiming
+            response.cookies.set(`guest_token_${submissionId}`, 'true', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 60 * 60 * 24 * 7 // 1 week
+            });
+        }
+
+        return response;
     } catch (error) {
         console.error('Analysis error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
