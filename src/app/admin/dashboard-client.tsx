@@ -1,17 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Sidebar, Activity, Users, Database, Globe, Search, Lock, List, ArrowRight } from 'lucide-react'
+import { Sidebar, Activity, Users, Database, Globe, Search, Lock, List, ArrowRight, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { UserTable } from './user-table'
 import { UnclaimedTable } from './unclaimed-table'
 import { AllAnalysesTable } from './all-analyses-table'
+import { ErrorLogTable } from './error-log-table'
 
 interface DashboardData {
     users: any[]
     unclaimedCount: number
     totalRevenue: number
-    recentSubmissions?: any[] // If we keep recent activity
+    recentErrors: number
 }
 
 export function DashboardClient({ 
@@ -23,6 +24,7 @@ export function DashboardClient({
 }) {
     const [showUnclaimed, setShowUnclaimed] = useState(false)
     const [showAllAnalyses, setShowAllAnalyses] = useState(false)
+    const [showErrors, setShowErrors] = useState(false)
 
     // Derived metrics
     const totalUsers = data.users.length
@@ -50,13 +52,11 @@ export function DashboardClient({
            <div className="p-6 md:p-12 max-w-7xl mx-auto space-y-12">
               
               {/* KPI Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                 {/* Clickable User Count */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                  <div onClick={() => document.getElementById('user-table-section')?.scrollIntoView({ behavior: 'smooth' })} className="cursor-pointer">
                     <KpiCard label="Active Profiles" value={totalUsers} icon={<Users className="w-5 h-5 text-orange-500"/>} />
                  </div>
 
-                 {/* Clickable Unclaimed Count */}
                  <div onClick={() => setShowUnclaimed(true)} className="cursor-pointer">
                     <KpiCard 
                         label="Unclaimed Analyses" 
@@ -66,12 +66,22 @@ export function DashboardClient({
                     />
                  </div>
 
-                 {/* Clickable Total Analyses */}
                  <div onClick={() => setShowAllAnalyses(true)} className="cursor-pointer">
                     <KpiCard label="Total Analyses" value={totalAnalyses} icon={<Activity className="w-5 h-5 text-green-500"/>} />
                  </div>
 
                  <KpiCard label="Est. Revenue" value={`$${totalRevenue.toFixed(2)}`} icon={<Search className="w-5 h-5 text-primary"/>} />
+
+                 <div onClick={() => setShowErrors(true)} className="cursor-pointer">
+                    <KpiCard 
+                        label="System Errors (24h)" 
+                        value={data.recentErrors} 
+                        icon={<AlertTriangle className="w-5 h-5 text-red-500"/>} 
+                        highlight={data.recentErrors > 0}
+                        highlightColor="text-red-500"
+                        borderColor="border-red-500/50"
+                    />
+                 </div>
               </div>
               
               {/* Management & Quick Links */}
@@ -104,18 +114,33 @@ export function DashboardClient({
            {/* Modals */}
            <UnclaimedTable isOpen={showUnclaimed} onClose={() => setShowUnclaimed(false)} />
            <AllAnalysesTable isOpen={showAllAnalyses} onClose={() => setShowAllAnalyses(false)} />
+           {showErrors && <ErrorLogTable onClose={() => setShowErrors(false)} />}
         </div>
     )
 }
 
-function KpiCard({label, value, icon, highlight}: {label: string, value: string | number, icon: React.ReactNode, highlight?: boolean}) {
+function KpiCard({
+    label, 
+    value, 
+    icon, 
+    highlight, 
+    highlightColor = 'text-orange-500',
+    borderColor = 'border-orange-500/50'
+}: {
+    label: string, 
+    value: string | number, 
+    icon: React.ReactNode, 
+    highlight?: boolean,
+    highlightColor?: string,
+    borderColor?: string
+}) {
     return (
-       <div className={`bg-black border p-6 flex flex-col gap-2 rounded-lg transition-all hover:bg-white/5 ${highlight ? 'border-orange-500/50' : 'border-white/10'}`}>
+       <div className={`bg-black border p-6 flex flex-col gap-2 rounded-lg transition-all hover:bg-white/5 ${highlight ? borderColor : 'border-white/10'}`}>
           <div className="flex justify-between items-start">
              <span className="text-slate-500 text-xs uppercase tracking-widest">{label}</span>
              {icon}
           </div>
-          <div className={`text-3xl font-bold ${highlight ? 'text-orange-500' : 'text-white'}`}>{value}</div>
+          <div className={`text-3xl font-bold ${highlight ? highlightColor : 'text-white'}`}>{value}</div>
        </div>
     )
  }

@@ -1,9 +1,11 @@
 // ... (imports remain)
+// ... (imports remain)
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { model } from '@/lib/gemini';
 import ExifReader from 'exifreader';
+import { Logger } from '@/lib/logger';
 
 // Helper to clean up orphaned files
 async function cleanupFiles(supabase: any, imagePath: string) {
@@ -12,12 +14,11 @@ async function cleanupFiles(supabase: any, imagePath: string) {
         const pathsToCheck = [
             imagePath,
             imagePath.replace('uploads/', 'previews/'),
-            // Also check for 'thumbnail_' prefix convention if used elsewhere, but regex replacement covers standard logic
         ]
-        console.log(`[Cleanup] Removing orphaned files: ${pathsToCheck.join(', ')}`)
+        Logger.info(`[Cleanup] Removing orphaned files: ${pathsToCheck.join(', ')}`)
         await supabase.storage.from('submissions').remove(pathsToCheck)
     } catch (e) {
-        console.error('[Cleanup] Failed to remove files', e)
+        Logger.error('[Cleanup] Failed to remove files', e)
     }
 }
 
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
 
         // Fallback to original if preview missing
         if (downloadError) {
-            console.log("Preview not found, falling back to original:", imagePath);
+            Logger.info("Preview not found, falling back to original:", { imagePath });
             ({ data: fileData, error: downloadError } = await supabase
                 .storage
                 .from('submissions')
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (downloadError || !fileData) {
-            console.error('Download error:', downloadError);
+            Logger.error('Download error:', downloadError, { imagePath });
             await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to download image' }, { status: 500 });
         }
@@ -86,11 +87,6 @@ export async function POST(req: NextRequest) {
         // 2a. Download ORIGINAL for EXIF (since preview strips it)
         let originalBuffer = arrayBuffer;
         if (imagePath.includes('uploads/')) {
-            // If we downloaded preview above, we need to fetch original for EXIF
-            // Check if fileData is actually the preview?
-            // Actually, we can just attempt to download original separately if we are using preview for AI
-
-            // To be efficient, let's just try to grab original if we haven't already
             if (previewPath !== imagePath && !downloadError) {
                 const { data: originalData, error: originalErr } = await supabase
                     .storage
@@ -108,7 +104,6 @@ export async function POST(req: NextRequest) {
         let technicalContext = ""
         try {
             const tags = ExifReader.load(originalBuffer);
-            // Extract key fields
             if (tags) {
                 exifData = {
                     make: tags['Make']?.description,
@@ -123,8 +118,6 @@ export async function POST(req: NextRequest) {
                     flash: tags['Flash']?.description,
                     datetime: tags['DateTimeOriginal']?.description
                 }
-
-                // Clean undefined values
                 Object.keys(exifData).forEach(key => exifData[key] === undefined && delete exifData[key]);
 
                 if (Object.keys(exifData).length > 0) {
@@ -139,7 +132,7 @@ export async function POST(req: NextRequest) {
                 }
             }
         } catch (e) {
-            console.log("EXIF Extraction failed (non-critical):", e)
+            Logger.warn("EXIF Extraction failed (non-critical):", { error: e });
         }
 
         // 3. Construct Prompt
@@ -177,18 +170,15 @@ export async function POST(req: NextRequest) {
         let analysisData;
 
         try {
-            // Clean up markdown code blocks if Gemini adds them
             const jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
             analysisData = JSON.parse(jsonStr);
         } catch (e) {
-            console.error("JSON Parse Error", responseText);
+            Logger.error("JSON Parse Error", e, { responseText });
             await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
         }
 
         // 5. Store Result in DB & Deduct Credit
-
-        // A. Create Submission Record
         const submissionPayload: any = {
             image_path: imagePath,
             thumbnail_path: previewPath,
@@ -210,21 +200,20 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (submissionError || !submissionData) {
-            console.error('Submission Insert Error:', submissionError);
+            Logger.error('Submission Insert Error:', submissionError);
             await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to save submission' }, { status: 500 });
         }
 
         const submissionId = submissionData.id;
 
-        // B. Create Analysis Record (Unlocked only if user exists/paid)
         const AnalysisDataFormatted = {
             submission_id: submissionId,
             full_critique: analysisData,
             preview_text: analysisData.preview_summary,
             title: analysisData.title,
-            is_unlocked: !!user, // Unlocked if user exists (and paid via credit)
-            score: analysisData.scores?.overall || analysisData.score // Handle both new and potentially old/fallback formats
+            is_unlocked: !!user,
+            score: analysisData.scores?.overall || analysisData.score
         };
 
         const { error: analysisError } = await supabase
@@ -232,19 +221,16 @@ export async function POST(req: NextRequest) {
             .insert(AnalysisDataFormatted);
 
         if (analysisError) {
-            console.error('Analysis Insert Error:', analysisError);
-            // If analysis fails, we should delete the submission we just created AND the files
+            Logger.error('Analysis Insert Error:', analysisError);
             await supabase.from('submissions').delete().eq('id', submissionId);
             await cleanupFiles(supabase, imagePath);
-            return NextResponse.json({ error: `Failed to save analysis: ${analysisError.message || JSON.stringify(analysisError)}` }, { status: 500 });
+            return NextResponse.json({ error: `Failed to save analysis` }, { status: 500 });
         }
 
         if (user) {
-            // Deduct Credit (Best Effort)
             const { error: rpcError } = await supabase.rpc('decrement_credits', { userid: user.id, count: 1 });
-
             if (rpcError) {
-                console.warn("RPC Failed, falling back to manual update", rpcError);
+                Logger.warn("RPC Failed, falling back to manual update", { rpcError });
                 // Fallback
                 const { data: current } = await supabase.from('profiles').select('credits_balance').eq('id', user.id).single();
                 if (current) {
@@ -253,11 +239,9 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Return the Submission ID to the frontend (with Cookie for Guests)
         const response = NextResponse.json({ success: true, id: submissionId });
 
         if (!user) {
-            // Set simple ownership token for guest claiming
             response.cookies.set(`guest_token_${submissionId}`, 'true', {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
@@ -269,7 +253,7 @@ export async function POST(req: NextRequest) {
 
         return response;
     } catch (error) {
-        console.error('Analysis error:', error);
+        Logger.error('Analysis error:', error, { imagePath });
         await cleanupFiles(supabase, imagePath);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }

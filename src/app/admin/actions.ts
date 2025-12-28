@@ -177,10 +177,18 @@ export async function getAdminDashboardData() {
     // Amount is in cents
     const totalRevenueCents = transactions?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0
 
+    // 6. Fetch Error Count (Last 24h)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { count: errorCount } = await adminDb
+        .from('error_logs')
+        .select('*', { count: 'exact', head: true })
+        .gte('timestamp', oneDayAgo)
+
     return {
         users: userStats,
         unclaimedCount: unclaimedSubs.length,
-        totalRevenue: totalRevenueCents / 100
+        totalRevenue: totalRevenueCents / 100,
+        recentErrors: errorCount || 0
     }
 }
 
@@ -362,3 +370,28 @@ export async function updateUserCredits(userId: string, amount: number) {
 
     revalidatePath('/admin')
 }
+
+export async function getErrorLogs(limit = 100) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    const { data: logs, error } = await adminDb
+        .from('error_logs')
+        .select('*, profiles:user_id(email)')
+        .order('timestamp', { ascending: false })
+        .limit(limit)
+
+    if (error) {
+        console.error('Failed to fetch error logs', error)
+        return []
+    }
+
+    return logs
+}
+
+
