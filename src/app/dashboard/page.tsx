@@ -110,54 +110,76 @@ export default async function DashboardPage() {
 
              {submissionsWithImages && submissionsWithImages.length > 0 ? (
                submissionsWithImages.map((sub) => (
-                 <div 
-                    key={sub.id} 
-                    className="group relative block bg-black border border-white/10 hover:border-primary transition-all p-4 md:p-6"
-                 >
-                    {/* Overlay Link covers the whole card except where pointer-events are auto */}
-                    <Link href={`/analysis/${sub.id}`} className="absolute inset-0 z-0" />
-                    
-                    <div className="flex items-center gap-6 relative z-10 pointer-events-none">
-                       <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative">
-                          {sub.thumbnailUrl ? (
-                              <img 
-                                src={sub.thumbnailUrl} 
-                                alt="Thumbnail" 
-                                className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity"
-                              />
-                          ) : (
-                              <FileImage className="w-6 h-6 text-slate-500 group-hover:text-primary transition-colors" />
-                          )}
-                       </div>
-                       
-                       <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-1">
-                             <h3 className="text-white font-bold text-lg truncate group-hover:text-primary transition-colors">
-                                {sub.analyses?.[0]?.title || 'Unknown Subject'}
-                             </h3>
-                             {sub.status === 'done' && <span className="text-[10px] bg-green-900/30 text-green-500 px-2 py-0.5 border border-green-900 uppercase">Analysis Complete</span>}
-                             {sub.status === 'processing' && <span className="text-[10px] bg-blue-900/30 text-blue-500 px-2 py-0.5 border border-blue-900 uppercase animate-pulse">Processing</span>}
-                             {sub.status === 'error' && <span className="text-[10px] bg-red-900/30 text-red-500 px-2 py-0.5 border border-red-900 uppercase">Failed</span>}
-                          </div>
-                          <p className="text-slate-500 text-xs uppercase truncate">
-                             {new Date(sub.created_at).toLocaleDateString()} // {sub.category}
-                          </p>
-                       </div>
+                  <div 
+                     key={sub.id} 
+                     className="group relative block bg-black border border-white/10 hover:border-primary transition-all p-4 md:p-6"
+                  >
+                     {/* Overlay Link covers the whole card except where pointer-events are auto */}
+                     <Link href={`/analysis/${sub.id}`} className="absolute inset-0 z-0" />
+                     
+                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6 relative z-10 pointer-events-none">
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                           <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative rounded-sm">
+                              {sub.thumbnailUrl ? (
+                                  <img 
+                                    src={sub.thumbnailUrl} 
+                                    alt="Thumbnail" 
+                                    className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity"
+                                  />
+                              ) : (
+                                  <FileImage className="w-6 h-6 text-slate-500 group-hover:text-primary transition-colors" />
+                              )}
+                           </div>
+                           
+                           {/* Mobile Only: Score next to image */}
+                           <div className="sm:hidden ml-auto text-right">
+                               <div className="text-2xl font-bold text-primary">{sub.analyses?.[0]?.score || '--'}</div>
+                               <div className="text-[10px] text-slate-500 uppercase">Score</div>
+                           </div>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <h3 className="text-white font-bold text-base md:text-lg truncate max-w-full group-hover:text-primary transition-colors">
+                                 {sub.analyses?.[0]?.title || 'Unknown Subject'}
+                              </h3>
+                              {sub.status === 'done' && <span className="text-[10px] bg-green-900/30 text-green-500 px-2 py-0.5 border border-green-900 uppercase whitespace-nowrap">Complete</span>}
+                              {sub.status === 'processing' && <span className="text-[10px] bg-blue-900/30 text-blue-500 px-2 py-0.5 border border-blue-900 uppercase animate-pulse whitespace-nowrap">Processing</span>}
+                              {sub.status === 'error' && <span className="text-[10px] bg-red-900/30 text-red-500 px-2 py-0.5 border border-red-900 uppercase whitespace-nowrap">Failed</span>}
+                           </div>
+                           <p className="text-slate-500 text-xs uppercase truncate">
+                              {new Date(sub.created_at).toLocaleDateString()} // {sub.category}
+                           </p>
+                        </div>
 
-                       <div className="text-right shrink-0 flex items-center gap-6 pointer-events-auto">
-                          {sub.status === 'done' && (
-                              <DashboardPublicToggle 
-                                   submissionId={sub.id} 
-                                   initialIsPublic={!!sub.analyses?.[0]?.is_public}
-                              />
-                          )}
-                          <div className="flex flex-col items-end">
-                              <div className="text-3xl font-bold text-primary">{sub.analyses?.[0]?.score || '--'}</div>
-                              <div className="text-[10px] text-slate-500 uppercase">Score</div>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
+                        {/* Desktop: Score and Toggle */}
+                        <div className="hidden sm:flex text-right shrink-0 flex-col items-end gap-2 pointer-events-auto min-w-[80px]">
+                           <div className="flex flex-col items-end">
+                               <div className="text-3xl font-bold text-primary">{sub.analyses?.[0]?.score || '--'}</div>
+                               <div className="text-[10px] text-slate-500 uppercase">Score</div>
+                           </div>
+                           {sub.status === 'done' && (
+                               <div className="mt-2">
+                                   <DashboardPublicToggle 
+                                        submissionId={sub.id} 
+                                        initialIsPublic={!!sub.analyses?.[0]?.is_public}
+                                   />
+                               </div>
+                           )}
+                        </div>
+                        
+                        {/* Mobile: Toggle only (Score moved top) */}
+                        <div className="sm:hidden flex justify-between items-center w-full pt-2 border-t border-white/5 pointer-events-auto">
+                            <span className="text-xs text-slate-500 uppercase">Visibility</span>
+                            {sub.status === 'done' && (
+                               <DashboardPublicToggle 
+                                    submissionId={sub.id} 
+                                    initialIsPublic={!!sub.analyses?.[0]?.is_public}
+                               />
+                           )}
+                        </div>
+                     </div>
+                  </div>
                ))
              ) : (
                 <div className="text-center py-20 border border-dashed border-white/10">

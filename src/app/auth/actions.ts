@@ -113,7 +113,7 @@ export async function signup(formData: FormData) {
 
     if (authData.user && !authData.session) {
         const nextParam = next ? `&next=${encodeURIComponent(next)}` : ''
-        return redirect(`/login?message=Check your email to confirm your account.${nextParam}`)
+        return redirect(`/login?message=Check your email (and junk folder) to confirm your account.${nextParam}`)
     }
 
     const redirectUrl = next && next.startsWith('/') ? next : '/dashboard'

@@ -20,15 +20,15 @@ export default async function SupportPage() {
     const status = await getConversationStatus()
 
     return (
-        <main className="min-h-screen bg-black text-white p-4 md:p-8 flex flex-col items-center">
-            <div className="w-full max-w-4xl flex-1 flex flex-col">
-                <div className="flex items-center justify-between mb-6">
+        <main className="h-[calc(100vh-64px)] bg-black text-white p-0 md:p-8 flex flex-col items-center">
+            <div className="w-full max-w-4xl flex-1 flex flex-col h-full">
+                <div className="flex items-center justify-between mb-4 p-4 md:p-0 md:mb-6 shrink-0">
                     <div className="flex items-center gap-4">
-                        <Link href="/profile" className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white">
+                        <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white">
                             <ArrowLeft className="w-6 h-6" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold font-mono uppercase tracking-widest text-primary flex items-center gap-3">
+                            <h1 className="text-xl md:text-2xl font-bold font-mono uppercase tracking-widest text-primary flex items-center gap-3">
                                 Support Center
                                 {status === 'resolved' && (
                                     <span className="text-[10px] bg-green-500/20 text-green-500 border border-green-500/50 px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -36,13 +36,13 @@ export default async function SupportPage() {
                                     </span>
                                 )}
                             </h1>
-                            <p className="text-slate-500 text-sm">Direct line to the SnapCritique team.</p>
+                            <p className="text-slate-500 text-xs md:text-sm">Direct line to the SnapCritique team.</p>
                         </div>
                     </div>
                     <SupportActions status={status} />
                 </div>
 
-                <div className="flex-1 min-h-[600px]">
+                <div className="flex-1 min-h-0 pb-2 md:pb-0 px-2 md:px-0">
                     <ChatInterface 
                         initialMessages={messages} 
                         onSendMessage={sendMessage} 

@@ -22,12 +22,12 @@ export default async function Home() {
       credits = profile?.credits_balance || 0
   }
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-24 bg-background relative overflow-hidden">
+    <main className="min-h-screen flex flex-col items-center justify-center p-6 md:p-24 bg-background relative overflow-hidden">
       
       {/* Decorative Lines */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       
-      <div className="z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <div className="z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mt-8 lg:mt-0">
         
         {/* Left Column: Text */}
         <div className="lg:col-span-5 text-left space-y-6">
@@ -36,25 +36,25 @@ export default async function Home() {
             AI Analysis Ready
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white font-mono leading-none">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter text-white font-mono leading-none">
             SNAP<br/>
             <span className="text-primary">CRITIQUE</span>
           </h1>
           
-          <p className="text-lg text-slate-400 font-mono border-l-2 border-primary/30 pl-4 py-1">
-            Because “looks fine” isn’t a plan. Get professional-grade feedback instantly.
+          <p className="text-base md:text-lg text-slate-400 font-mono border-l-2 border-primary/30 pl-4 py-1">
+            Because "looks fine" isn't a plan. Get professional-grade feedback instantly.
           </p>
 
-          <p className="text-sm text-slate-500 font-mono">
-             Upload your photo. Tell us your intent. We’ll handle the rest.
+          <p className="text-xs md:text-sm text-slate-500 font-mono">
+             Upload your photo. Tell us your intent. We'll handle the rest.
           </p>
         </div>
 
         {/* Right Column: Upload HUD */}
-        <div className="lg:col-span-7 w-full relative">
+        <div className="lg:col-span-7 w-full relative mt-4 lg:mt-0">
           {/* Corner Markers (Subtler) */}
-          <div className="absolute -top-4 -left-4 w-4 h-4 border-t border-l border-primary/50 z-20" />
-          <div className="absolute -bottom-4 -right-4 w-4 h-4 border-b border-r border-primary/50 z-20" />
+          <div className="absolute -top-4 -left-4 w-4 h-4 border-t border-l border-primary/50 z-20 hidden md:block" />
+          <div className="absolute -bottom-4 -right-4 w-4 h-4 border-b border-r border-primary/50 z-20 hidden md:block" />
           
           <div className="bg-card border border-white/10 p-1 relative shadow-2xl">
              <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
@@ -68,7 +68,7 @@ export default async function Home() {
       </div>
 
       {/* Feature Grid */}
-      <div className="mt-24 w-full max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="mt-12 md:mt-24 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { icon: <Crosshair className="w-6 h-6"/>, title: "Composition", desc: "Detailed breakdown of framing and balance." },
           { icon: <Aperture className="w-6 h-6"/>, title: "Technical", desc: "Analysis of exposure, color, and focus." },
