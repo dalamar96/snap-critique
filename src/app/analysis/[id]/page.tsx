@@ -2,7 +2,6 @@ import { AnalysisContainer } from '@/components/analysis-container'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import { stripe } from '@/lib/stripe'
 import { revalidatePath } from 'next/cache'
 import { ShareAnalysisDialog } from '@/components/share-analysis-dialog'
 import { Metadata } from 'next'
@@ -60,45 +59,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function ResultsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ unlocked?: string, session_id?: string, claim?: string }> }) {
+export default async function ResultsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ claim?: string }> }) {
   console.log("Rendering ResultsPage")
   const { id } = await params
-  const { session_id } = await searchParams
   
   const supabase = createAdminClient()
 
-  // 1. If session_id exists, verify payment and update DB
-  if (session_id) {
-     console.log(`[Payment] Verifying session: ${session_id} for submission: ${id}`)
-     try {
-       const session = await stripe.checkout.sessions.retrieve(session_id)
-       console.log(`[Payment] Status: ${session.payment_status}`)
-       
-       if (session.payment_status === 'paid') {
-          // STRICT CHECK: Ensure this session was for THIS analysis
-          if (session.metadata?.analysisId !== id) {
-              console.error(`[Payment] Session ID mismatch/Replay attempt. Session AnalysisId: ${session.metadata?.analysisId}, Current: ${id}`)
-              // Do not unlock
-           } else {
-              const { error } = await supabase
-                .from('analyses')
-                .update({ is_unlocked: true })
-                .eq('submission_id', id)
-              
-              if (error) {
-                 console.error("[Payment] DB Update Failed:", error)
-              } else {
-                 console.log("[Payment] Unlock Successful")
-              }
-           }
-       }
-     } catch (e) {
-       console.error("[Payment] Stripe Verification Failed", e)
-     }
-     
-     // Redirect to remove query params for clean URL
-     redirect(`/analysis/${id}`)
-  }
+// 1. (Removed Legacy Payment Verification)
 
   // 2. Fetch Submission First (Source of Truth for Status)
   const { data: submissionRecord } = await supabase
@@ -215,27 +182,28 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
           redirect(`/analysis/${id}`) 
       }
 
-      // 1. Check & Deduct Credits
+      // 1. Try to Deduct Credit & Unlock (Optional)
       if (userCredits > 0) {
           // Attempt RPC (Atomic)
           const { error: rpcError } = await supabase.rpc('decrement_credits', { userid: user.id, count: 1 })
           
           if (rpcError) {
+             console.error("[Claim] RPC Error", rpcError)
              // Fallback to direct update if RPC fails
              await supabase
                .from('profiles')
                .update({ credits_balance: userCredits - 1 })
                .eq('id', user.id)
+          } else {
+              // Only unlock if deduction succeeded
+              await supabase
+                .from('analyses')
+                .update({ is_unlocked: true })
+                .eq('submission_id', id)
           }
-
-          // 2. Mark Analysis as Unlocked explicitly (since they paid)
-          await supabase
-            .from('analyses')
-            .update({ is_unlocked: true })
-            .eq('submission_id', id)
       }
 
-      // 3. Assign Ownership
+      // 2. Assign Ownership (Always)
       await supabase
         .from('submissions')
         .update({ user_id: user.id })
@@ -263,9 +231,10 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
        }
   }
 
-  // 6. Determine Lock Status from DB (Single Source of Truth) OR Admin Override OR Owner Override
+  // 6. Determine Lock Status from DB (Single Source of Truth) OR Admin Override
+  // NOTE: Ownership does NOT imply unlocked status anymore.
   const isOwner = user && submissionRecord.user_id === user.id
-  const isUnlocked = analysisRecord.is_unlocked || isOwner || isAdmin
+  const isUnlocked = analysisRecord.is_unlocked || isAdmin
 
   // Type assertion
   let analysisData = analysisRecord.full_critique as any 

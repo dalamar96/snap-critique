@@ -1,7 +1,26 @@
 import { UploadZone } from '@/components/upload-zone'
 import { Aperture, Crosshair, Target, CheckCircle } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  let credits = null
+  let isGuest = true
+
+  if (user) {
+      isGuest = false
+      const adminDb = createAdminClient()
+      const { data: profile } = await adminDb
+        .from('profiles')
+        .select('credits_balance')
+        .eq('id', user.id)
+        .single()
+      
+      credits = profile?.credits_balance || 0
+  }
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-24 bg-background relative overflow-hidden">
       
@@ -39,7 +58,10 @@ export default function Home() {
           
           <div className="bg-card border border-white/10 p-1 relative shadow-2xl">
              <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
-             <UploadZone />
+             <UploadZone 
+                userCredits={credits} 
+                isGuest={isGuest} 
+             />
           </div>
         </div>
 

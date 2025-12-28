@@ -47,36 +47,11 @@ export async function POST(req: NextRequest) {
                 }
             });
             return NextResponse.json({ url: session.url });
+            return NextResponse.json({ url: session.url });
         }
 
-        if (!analysisId) {
-            return NextResponse.json({ error: 'ID required' }, { status: 400 });
-        }
+        return NextResponse.json({ error: 'Package ID required' }, { status: 400 });
 
-        // Original Analysis Logic (Direct Unlock - fallback)
-        const session = await stripe.checkout.sessions.create({
-            line_items: [
-                {
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: 'Snap Critique - Full Analysis Unlock',
-                            description: 'Unlock detailed AI photography feedback, improvements, and drills.',
-                        },
-                        unit_amount: 499, // $4.99
-                    },
-                    quantity: 1,
-                },
-            ],
-            mode: 'payment',
-            success_url: `${origin}/analysis/${analysisId}?unlocked=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${origin}/analysis/${analysisId}?canceled=true`,
-            metadata: {
-                analysisId: analysisId
-            }
-        });
-
-        return NextResponse.json({ url: session.url });
     } catch (err: any) {
         console.error('Stripe Error:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });

@@ -5,14 +5,29 @@ import { Upload, ScanLine } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
-export function UploadZone() {
+interface UploadZoneProps {
+    userCredits?: number | null
+    isGuest?: boolean
+}
+
+export function UploadZone({ userCredits = null, isGuest = true }: UploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Determine eligibility
+  const hasCredits = isGuest || (userCredits !== null && userCredits > 0)
+  const isBlocked = !hasCredits && !isGuest
+
   const processFile = useCallback(async (file: File) => {
+       if (isBlocked) {
+           router.push('/pricing')
+           return
+       }
+
        // Basic validation
        if (!file.type.startsWith('image/')) {
          alert('Please upload an image file.')
@@ -63,6 +78,10 @@ export function UploadZone() {
   }, [processFile])
 
   const handleClick = () => {
+      if (isBlocked) {
+          router.push('/pricing')
+          return
+      }
       fileInputRef.current?.click()
   }
 
@@ -101,10 +120,10 @@ export function UploadZone() {
         </div>
         
         <h3 className="text-xl font-mono font-bold text-white uppercase tracking-widest mb-2">
-          {isUploading ? "UPLOADING..." : "Start Analysis"}
+          {isUploading ? "UPLOADING..." : isBlocked ? "OUT OF CREDITS" : "Start Analysis"}
         </h3>
-        <p className="font-mono text-xs text-primary/70 uppercase">
-          {isUploading ? "Processing..." : "[ Drag & Drop or Click to Upload ]"}
+        <p className={cn("font-mono text-xs uppercase", isBlocked ? "text-red-500" : "text-primary/70")}>
+          {isUploading ? "Processing..." : isBlocked ? "[ Click to Top Up ]" : "[ Drag & Drop or Click to Upload ]"}
         </p>
       </div>
 
@@ -116,11 +135,21 @@ export function UploadZone() {
           onChange={handleFileSelect}
        />
       
-      {/* Status Footer */}
-      <div className="absolute bottom-0 inset-x-0 bg-white/5 p-2 flex justify-between font-mono text-[10px] text-white/40 uppercase">
-         <span className="pl-8">Format: JPG/PNG</span>
-         <span className="pr-10">Max: 20MB</span>
-      </div>
+       {/* Status Footer */}
+       <div className="absolute bottom-0 inset-x-0 bg-white/5 p-2 flex justify-between font-mono text-[10px] text-white/40 uppercase">
+          <span className="pl-8 flex items-center gap-2">
+              {isGuest ? (
+                  <span className="text-primary">Guest Mode (Free)</span>
+              ) : isBlocked ? (
+                  <span className="text-red-500 font-bold flex items-center gap-1">
+                      Insufficient Credits <Link href="/pricing" className="underline ml-1">Get More</Link>
+                  </span>
+              ) : (
+                  <span className="text-green-500">Balance: {userCredits} Credits</span>
+              )}
+          </span>
+          <span className="pr-10">Max: 20MB</span>
+       </div>
     </div>
   )
 }

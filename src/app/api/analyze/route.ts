@@ -5,15 +5,34 @@ import { createClient } from '@/lib/supabase/server';
 import { model } from '@/lib/gemini';
 import ExifReader from 'exifreader';
 
-export async function POST(req: NextRequest) {
+// Helper to clean up orphaned files
+async function cleanupFiles(supabase: any, imagePath: string) {
+    if (!imagePath) return;
     try {
-        const { imagePath, category, goals, context } = await req.json();
+        const pathsToCheck = [
+            imagePath,
+            imagePath.replace('uploads/', 'previews/'),
+            // Also check for 'thumbnail_' prefix convention if used elsewhere, but regex replacement covers standard logic
+        ]
+        console.log(`[Cleanup] Removing orphaned files: ${pathsToCheck.join(', ')}`)
+        await supabase.storage.from('submissions').remove(pathsToCheck)
+    } catch (e) {
+        console.error('[Cleanup] Failed to remove files', e)
+    }
+}
+
+export async function POST(req: NextRequest) {
+    let imagePath = '';
+    const supabase = createAdminClient();
+
+    try {
+        const body = await req.json();
+        imagePath = body.imagePath;
+        const { category, goals, context } = body;
 
         // 0. Auth & Credit Check (Optional)
         const supabaseUser = await createClient();
         const { data: { user } } = await supabaseUser.auth.getUser();
-
-        const supabase = createAdminClient();
 
         if (user) {
             // Check credits
@@ -24,6 +43,7 @@ export async function POST(req: NextRequest) {
                 .single();
 
             if (!profile || (profile.credits_balance || 0) < 1) {
+                await cleanupFiles(supabase, imagePath);
                 return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 });
             }
         }
@@ -55,6 +75,7 @@ export async function POST(req: NextRequest) {
 
         if (downloadError || !fileData) {
             console.error('Download error:', downloadError);
+            await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to download image' }, { status: 500 });
         }
 
@@ -161,6 +182,7 @@ export async function POST(req: NextRequest) {
             analysisData = JSON.parse(jsonStr);
         } catch (e) {
             console.error("JSON Parse Error", responseText);
+            await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
         }
 
@@ -189,6 +211,7 @@ export async function POST(req: NextRequest) {
 
         if (submissionError || !submissionData) {
             console.error('Submission Insert Error:', submissionError);
+            await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to save submission' }, { status: 500 });
         }
 
@@ -210,6 +233,9 @@ export async function POST(req: NextRequest) {
 
         if (analysisError) {
             console.error('Analysis Insert Error:', analysisError);
+            // If analysis fails, we should delete the submission we just created AND the files
+            await supabase.from('submissions').delete().eq('id', submissionId);
+            await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: `Failed to save analysis: ${analysisError.message || JSON.stringify(analysisError)}` }, { status: 500 });
         }
 
@@ -244,6 +270,7 @@ export async function POST(req: NextRequest) {
         return response;
     } catch (error) {
         console.error('Analysis error:', error);
+        await cleanupFiles(supabase, imagePath);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

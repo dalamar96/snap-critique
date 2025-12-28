@@ -86,7 +86,9 @@ export async function signup(formData: FormData) {
 
         // 3. Link Guest Submission if 'next' param points to an analysis
         if (next && next.startsWith('/analysis/')) {
-            const submissionId = next.split('/').pop()
+            // Extract ID effectively, ignoring query params like ?claim=true
+            const path = next.split('?')[0] // /analysis/[id]
+            const submissionId = path.split('/').pop()
             if (submissionId) {
                 const { error: linkError } = await adminSupabase
                     .from('submissions')
