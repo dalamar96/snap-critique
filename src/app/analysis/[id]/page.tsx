@@ -199,6 +199,27 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
   const { claim } = await searchParams
   
   if (user && !submissionRecord.user_id && !isAdmin && claim === 'true') {
+      // 1. Check & Deduct Credits
+      if (userCredits > 0) {
+          // Attempt RPC (Atomic)
+          const { error: rpcError } = await supabase.rpc('decrement_credits', { userid: user.id, count: 1 })
+          
+          if (rpcError) {
+             // Fallback to direct update if RPC fails
+             await supabase
+               .from('profiles')
+               .update({ credits_balance: userCredits - 1 })
+               .eq('id', user.id)
+          }
+
+          // 2. Mark Analysis as Unlocked explicitly (since they paid)
+          await supabase
+            .from('analyses')
+            .update({ is_unlocked: true })
+            .eq('submission_id', id)
+      }
+
+      // 3. Assign Ownership
       await supabase
         .from('submissions')
         .update({ user_id: user.id })
