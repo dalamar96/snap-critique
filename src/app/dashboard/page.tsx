@@ -64,7 +64,7 @@ export default async function DashboardPage() {
   })) : []
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 md:p-12 font-mono">
+    <div className="min-h-screen bg-slate-950 px-4 py-8 md:p-12 font-mono w-full max-w-[100vw] overflow-x-hidden">
        <div className="max-w-6xl mx-auto">
           
           {/* Header */}
