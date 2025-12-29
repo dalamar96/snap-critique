@@ -28,9 +28,9 @@ export function UnclaimedTable({
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
              <div 
-                className="bg-slate-900 border border-white/10 w-full max-w-4xl max-h-[80vh] rounded-xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
+                className="bg-slate-900 border border-white/10 w-full max-w-4xl h-full md:h-auto md:max-h-[80vh] rounded-none md:rounded-xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -60,7 +60,7 @@ export function UnclaimedTable({
                             No unclaimed submissions found.
                         </div>
                     ) : (
-                        <table className="w-full text-left text-sm">
+                        <table className="w-full text-left text-sm min-w-[600px]">
                             <thead className="sticky top-0 bg-slate-900 z-10">
                                 <tr className="border-b border-white/10 text-slate-500 uppercase text-xs">
                                     <th className="p-4">Submission</th>

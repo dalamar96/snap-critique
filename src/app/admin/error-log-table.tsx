@@ -40,9 +40,9 @@ export function ErrorLogTable({ onClose }: { onClose: () => void }) {
     }, [])
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
             <div 
-                className="bg-slate-900 border border-white/10 w-full max-w-6xl max-h-[90vh] rounded-xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
+                className="bg-slate-900 border border-white/10 w-full max-w-6xl h-full md:h-auto md:max-h-[90vh] rounded-none md:rounded-xl flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -63,7 +63,7 @@ export function ErrorLogTable({ onClose }: { onClose: () => void }) {
 
                 {/* Table */}
                 <div className="flex-1 overflow-auto p-4">
-                    <table className="w-full text-left text-sm font-mono">
+                    <table className="w-full text-left text-sm font-mono min-w-[800px]">
                         <thead>
                             <tr className="border-b border-white/10 text-slate-500 uppercase text-xs">
                                 <th className="p-3 w-10"></th>

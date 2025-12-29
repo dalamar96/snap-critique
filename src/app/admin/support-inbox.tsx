@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getAllConversations, getConversation, replyToUser, markAdminRead, adminResolveConversation, adminDeleteConversation } from './actions'
 import { ChatInterface } from '@/components/chat-interface'
-import { X, Search, Mail, CheckCircle, Trash2, RefreshCw } from 'lucide-react'
+import { X, Search, Mail, CheckCircle, Trash2, RefreshCw, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ConversationSummary {
@@ -85,20 +85,28 @@ export function SupportInbox({ onClose }: { onClose: () => void }) {
     const selectedConv = conversations.find(c => c.userId === selectedUserId)
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={onClose}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/90 backdrop-blur-sm" onClick={onClose}>
             <div 
-                className="bg-slate-950 border border-white/10 w-full max-w-6xl h-[85vh] rounded-xl flex overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
+                className="bg-slate-950 border border-white/10 w-full max-w-6xl h-full md:h-[85vh] rounded-none md:rounded-xl flex overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
                 onClick={e => e.stopPropagation()}
             >
                 {/* Sidebar */}
-                <div className="w-1/3 border-r border-white/10 flex flex-col bg-slate-900">
-                    <div className="p-4 border-b border-white/10 bg-black/40 flex justify-between items-center">
+                <div className={cn(
+                    "w-full md:w-1/3 border-r border-white/10 flex-col bg-slate-900",
+                    selectedUserId ? "hidden md:flex" : "flex"
+                )}>
+                    <div className="p-4 border-b border-white/10 bg-black/40 flex justify-between items-center shrink-0">
                         <h3 className="font-bold text-white uppercase tracking-wider flex items-center gap-2">
                             <Mail className="w-5 h-5 text-primary" /> Inbox
                         </h3>
-                        <button onClick={loadConversations} className="text-slate-500 hover:text-white" title="Refresh">
-                            <RefreshCw className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={loadConversations} className="text-slate-500 hover:text-white" title="Refresh">
+                                <RefreshCw className="w-4 h-4" />
+                            </button>
+                            <button onClick={onClose} className="md:hidden text-slate-500 hover:text-white" title="Close">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
                     </div>
                     <div className="flex-1 overflow-y-auto">
                         {loading && <div className="p-4 text-slate-500 text-sm">Loading...</div>}
@@ -136,40 +144,53 @@ export function SupportInbox({ onClose }: { onClose: () => void }) {
                 </div>
 
                 {/* Main Chat Area */}
-                <div className="flex-1 flex flex-col bg-black relative">
+                <div className={cn(
+                    "flex-1 flex-col bg-black relative",
+                    selectedUserId ? "flex" : "hidden md:flex"
+                )}>
                     <button 
                         onClick={onClose}
-                        className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors"
+                        className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors hidden md:block"
                     >
                         <X className="w-5 h-5" />
                     </button>
 
                     {selectedUserId ? (
                         <div className="flex-1 flex flex-col h-full">
-                            <div className="p-4 border-b border-white/10 bg-slate-900/50 flex justify-between items-center pr-16">
-                                <div>
-                                    <h3 className="text-white font-bold flex items-center gap-2">
-                                        {selectedConv?.email}
-                                        {selectedConv?.status === 'resolved' && (
-                                            <span className="text-[10px] bg-green-900/30 text-green-500 px-2 py-0.5 rounded border border-green-900 uppercase">Resolved</span>
-                                        )}
-                                    </h3>
-                                    <div className="text-xs text-slate-500 font-mono">ID: {selectedUserId}</div>
+                            <div className="p-4 border-b border-white/10 bg-slate-900/50 flex justify-between items-center pr-4 md:pr-16 shrink-0">
+                                <div className="flex items-center gap-2">
+                                     {/* Mobile Back Button */}
+                                     <button 
+                                        onClick={() => setSelectedUserId(null)}
+                                        className="md:hidden p-1 mr-2 text-slate-400 hover:text-white"
+                                     >
+                                        <ArrowLeft className="w-5 h-5" />
+                                     </button>
+
+                                    <div>
+                                        <h3 className="text-white font-bold flex items-center gap-2 text-sm md:text-base">
+                                            {selectedConv?.email}
+                                            {selectedConv?.status === 'resolved' && (
+                                                <span className="text-[10px] bg-green-900/30 text-green-500 px-2 py-0.5 rounded border border-green-900 uppercase">Resolved</span>
+                                            )}
+                                        </h3>
+                                        <div className="text-[10px] md:text-xs text-slate-500 font-mono">ID: {selectedUserId.slice(0, 8)}...</div>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {selectedConv?.status === 'resolved' ? (
                                         <button 
                                             onClick={(e) => handleResolve(e, 'open')}
-                                            className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold uppercase"
+                                            className="px-2 py-1 md:px-3 md:py-1.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold uppercase"
                                         >
                                             Re-open
                                         </button>
                                     ) : (
                                         <button 
                                             onClick={(e) => handleResolve(e, 'resolved')}
-                                            className="px-3 py-1.5 rounded bg-green-500/20 hover:bg-green-500/30 text-green-500 text-xs font-bold uppercase flex items-center gap-1"
+                                            className="px-2 py-1 md:px-3 md:py-1.5 rounded bg-green-500/20 hover:bg-green-500/30 text-green-500 text-xs font-bold uppercase flex items-center gap-1"
                                         >
-                                            <CheckCircle className="w-4 h-4" /> Resolve
+                                            <CheckCircle className="w-4 h-4" /> <span className="hidden sm:inline">Resolve</span>
                                         </button>
                                     )}
                                     
@@ -182,7 +203,7 @@ export function SupportInbox({ onClose }: { onClose: () => void }) {
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-hidden p-4">
+                            <div className="flex-1 overflow-hidden p-0 md:p-4 bg-black">
                                 <ChatInterface 
                                     initialMessages={activeMessages} 
                                     onSendMessage={handleSendMessage} 
