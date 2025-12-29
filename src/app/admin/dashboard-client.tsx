@@ -119,6 +119,14 @@ export function DashboardClient({
                         </div>
                         <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
                     </Link>
+
+                    <Link href="/admin/lessons" className="bg-black border border-white/10 p-6 rounded-lg hover:border-primary transition-colors flex items-center justify-between group">
+                        <div>
+                            <h3 className="text-lg font-bold text-white uppercase mb-1">Lessons</h3>
+                            <p className="text-slate-500 text-xs">Manage Courses & Content</p>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
+                    </Link>
                   </div>
               </div>
     

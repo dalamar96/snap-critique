@@ -17,6 +17,7 @@ interface AnalysisContainerProps {
     metadata: any
     comments: Comment[]
     currentUser: any
+    lessonContext?: { title: string, slug: string } | null
 }
 
 export function AnalysisContainer({
@@ -28,7 +29,8 @@ export function AnalysisContainer({
     isGuest,
     metadata,
     comments,
-    currentUser
+    currentUser,
+    lessonContext
 }: AnalysisContainerProps) {
     const [activePin, setActivePin] = useState<{x: number, y: number} | null>(null)
     const [isPinModalOpen, setIsPinModalOpen] = useState(false)
@@ -54,6 +56,7 @@ export function AnalysisContainer({
                 activePin={activePin}
                 onImageClick={() => {}} // Main image is read-only for clicking
                 isPinning={false} // Main image is not in pinning mode
+                lessonContext={lessonContext}
             />
 
             <CommentSection 

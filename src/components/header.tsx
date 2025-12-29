@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Camera, LogOut, User, LayoutDashboard, Database, LifeBuoy } from 'lucide-react'
+import { Camera, LogOut, User, LayoutDashboard, Database, LifeBuoy, BookOpen, Info, Compass, Users } from 'lucide-react'
 import { signout } from '@/app/auth/actions'
 import { MobileNav } from './mobile-nav'
 
@@ -9,7 +9,7 @@ export async function Header() {
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <header className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+    <header className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50 pointer-events: none;">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         
         {/* Logo */}
@@ -24,35 +24,42 @@ export async function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
-            <Link href="/about" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
+            <Link href="/about" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider transition-colors">
+                <Info className="w-4 h-4" />
                 About
             </Link>
-            <Link href="/gallery" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
+            <Link href="/gallery" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider transition-colors">
+                <Compass className="w-4 h-4" />
                 Explore
             </Link>
-             <Link href="/community" className="text-sm font-mono text-slate-400 hover:text-white uppercase tracking-wider transition-colors">
+             <Link href="/community" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider transition-colors">
+                <Users className="w-4 h-4" />
                 Community
             </Link>
             {user ? (
                 <>
-                    <Link href="/dashboard" className="text-sm font-mono text-slate-400 hover:text-white flex items-center gap-2 uppercase tracking-wider">
+                    <Link href="/learning" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider">
+                        <BookOpen className="w-4 h-4" />
+                        <span className="hidden sm:inline">Learn</span>
+                    </Link>
+                    <Link href="/dashboard" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider">
                         <LayoutDashboard className="w-4 h-4" />
                         <span className="hidden sm:inline">Dashboard</span>
                     </Link>
 
-                    <Link href={`/profile/${user.id}`} className="text-sm font-mono text-slate-400 hover:text-white flex items-center gap-2 uppercase tracking-wider">
+                    <Link href={`/profile/${user.id}`} className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider">
                         <User className="w-4 h-4" />
                         <span className="hidden sm:inline">Profile</span>
                     </Link>
 
-                    <Link href="/support" className="text-sm font-mono text-slate-400 hover:text-white flex items-center gap-2 uppercase tracking-wider" title="Support">
+                    <Link href="/support" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider" title="Support">
                         <LifeBuoy className="w-4 h-4" />
                         <span className="hidden sm:inline">Support</span>
                     </Link>
                     
                     {/* Sign Out Button (Form) */}
                     <form action={signout}>
-                        <button className="text-sm font-mono text-red-500 hover:text-red-400 flex items-center gap-2 uppercase tracking-wider">
+                        <button className="text-sm font-mono text-red-500 hover:text-red-800 flex items-center gap-2 uppercase tracking-wider">
                             <LogOut className="w-4 h-4" />
                         </button>
                     </form>

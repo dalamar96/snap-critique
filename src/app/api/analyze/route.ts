@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         imagePath = body.imagePath;
-        const { category, goals, context } = body;
+        const { category, goals, context, lessonId } = body;
 
         // 0. Auth & Credit Check (Optional)
         const supabaseUser = await createClient();
@@ -135,9 +135,33 @@ export async function POST(req: NextRequest) {
             Logger.warn("EXIF Extraction failed (non-critical):", { error: e });
         }
 
-        // 3. Construct Prompt
+        // 3. Construct Prompt with Homework Context
+        let homeworkContext = "";
+        let lessonData = null;
+
+        if (lessonId) {
+            const { data: fetchedLesson } = await supabase.from('lessons').select('*').eq('id', lessonId).single();
+            if (fetchedLesson) {
+                lessonData = fetchedLesson;
+                homeworkContext = `
+                 ---
+                 IMPORTANT: THIS IS A HOMEWORK ASSIGNMENT.
+                 LESSON TOPIC: ${fetchedLesson.title}
+                 LESSON GOALS: ${fetchedLesson.learning_goals || 'Follow general principles of this topic.'}
+                 
+                 CRITICAL INSTRUCTIONS:
+                 1. Evaluate the image PRIMARILY against the "LESSON GOALS" above.
+                 2. The "goal_score" in your JSON output must reflect how well the user achieved these specific lesson objectives.
+                 3. In your "strengths" and "improvements", reference the lesson topic explicitly.
+                 ---
+                 `;
+            }
+        }
+
         const prompt = `
-      Act as a world-class photography mentor. Analyze this ${category || 'photo'} based on these goals: ${goals?.join(', ')}.
+      Act as a world-class photography mentor. Analyze this ${category || 'photo'}.
+      ${homeworkContext}
+      User Goals: ${goals?.join(', ') || 'Improvement'}
       User Context: ${context || 'None provided.'}
       ${technicalContext}
       
@@ -145,6 +169,8 @@ export async function POST(req: NextRequest) {
       The JSON structure must include:
       - title: specific to the subject
       - scores: { composition: 0-100, technique: 0-100, creativity: 0-100, overall: 0-100 }
+      - goal_score: 0-100 (Relevance to lesson goals / user goals. Critical for homework.)
+      - goal_feedback: string (Specific feedback on how well the photo met the lesson goals)
       - nsfw_score: 0-100 (likelihood of NSFW content or nudity. 0 = clean, 100 = explicit)
       - ai_generated_score: 0-100 (likelihood of AI generation. 0 = real photo, 100 = definitely AI)
       - description: 1-2 sentence aesthetic summary
@@ -186,7 +212,8 @@ export async function POST(req: NextRequest) {
             goals,
             context,
             metadata: exifData,
-            status: 'done'
+            status: 'done',
+            lesson_id: lessonId || null // Link to lesson
         };
 
         if (user) {
@@ -206,6 +233,7 @@ export async function POST(req: NextRequest) {
         }
 
         const submissionId = submissionData.id;
+        const goalScore = analysisData.goal_score || analysisData.scores?.overall || 0;
 
         const AnalysisDataFormatted = {
             submission_id: submissionId,
@@ -213,7 +241,8 @@ export async function POST(req: NextRequest) {
             preview_text: analysisData.preview_summary,
             title: analysisData.title,
             is_unlocked: !!user,
-            score: analysisData.scores?.overall || analysisData.score
+            score: analysisData.scores?.overall || analysisData.score,
+            goal_score: goalScore
         };
 
         const { error: analysisError } = await supabase
@@ -225,6 +254,26 @@ export async function POST(req: NextRequest) {
             await supabase.from('submissions').delete().eq('id', submissionId);
             await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: `Failed to save analysis` }, { status: 500 });
+        }
+
+        // 6. Award Homework Points (Bonus XP) if User & Lesson
+        if (user && lessonId && lessonData) {
+            // Upsert to user_homework_progress
+            // We use goal_score as the XP amount for homework
+            const { error: hwError } = await supabase
+                .from('user_homework_progress')
+                .upsert({
+                    user_id: user.id,
+                    lesson_id: lessonId,
+                    submission_id: submissionId,
+                    points_awarded: goalScore
+                }, { onConflict: 'user_id, lesson_id' }) // Overwrite previous attempt with best? Or upsert keeps latest?
+
+            if (hwError) {
+                Logger.error("Homework Progress Error:", hwError)
+            } else {
+                Logger.info(`[Homework] Awarded ${goalScore} points to user ${user.id} for lesson ${lessonId}`)
+            }
         }
 
         if (user) {

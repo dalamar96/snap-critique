@@ -148,6 +148,20 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
       )
   }
 
+  // Fetch Lesson Context if Homework
+  let lessonContext = null
+  if (submissionRecord.lesson_id) {
+       const { data: lesson } = await supabase
+           .from('lessons')
+           .select('title, slug')
+           .eq('id', submissionRecord.lesson_id)
+           .single()
+       
+       if (lesson) {
+           lessonContext = lesson
+       }
+  }
+
   // 4. Get Image URL
   let imageUrl = null;
   if (submissionRecord?.image_path) {
@@ -254,7 +268,9 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
           title: analysisData.title,
           description: analysisData.description,
           nsfw_score: analysisData.nsfw_score,
-          ai_generated_score: analysisData.ai_generated_score
+          ai_generated_score: analysisData.ai_generated_score,
+          goal_score: analysisData.goal_score,
+          goal_feedback: null // Locked
       }
   } 
   
@@ -354,6 +370,7 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
             metadata={submissionRecord.metadata}
             comments={comments || []}
             currentUser={user}
+            lessonContext={lessonContext}
         />
       </div>
     </div>

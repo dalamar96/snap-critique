@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, LayoutDashboard, User, LifeBuoy, LogOut, Camera } from 'lucide-react'
+import { Menu, X, LayoutDashboard, User, LifeBuoy, LogOut, Camera, BookOpen, Info, Compass, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { signout } from '@/app/auth/actions'
 
@@ -45,23 +45,23 @@ export function MobileNav({ user }: MobileNavProps) {
                         <Link 
                             href="/about" 
                             onClick={() => setIsOpen(false)}
-                            className="block text-lg font-mono text-slate-300 hover:text-white"
+                            className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
                         >
-                            About
+                            <Info className="w-5 h-5" /> About
                         </Link>
                         <Link 
                             href="/gallery" 
                             onClick={() => setIsOpen(false)}
-                            className="block text-lg font-mono text-slate-300 hover:text-white"
+                            className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
                         >
-                            Explore
+                            <Compass className="w-5 h-5" /> Explore
                         </Link>
                         <Link 
                             href="/community" 
                             onClick={() => setIsOpen(false)}
-                            className="block text-lg font-mono text-slate-300 hover:text-white"
+                            className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
                         >
-                            Community
+                            <Users className="w-5 h-5" /> Community
                         </Link>
                     </div>
 
@@ -71,9 +71,16 @@ export function MobileNav({ user }: MobileNavProps) {
                         <div className="space-y-4">
                             <h4 className="text-xs uppercase tracking-widest text-slate-500 font-bold">Account</h4>
                             <Link 
+                                href="/learning" 
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
+                            >
+                                <BookOpen className="w-5 h-5" /> Learn
+                            </Link>
+                            <Link 
                                 href="/dashboard" 
                                 onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:text-white"
+                                className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
                             >
                                 <LayoutDashboard className="w-5 h-5" /> Dashboard
                             </Link>
@@ -81,7 +88,7 @@ export function MobileNav({ user }: MobileNavProps) {
                             <Link 
                                 href={`/profile/${user.id}`} 
                                 onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:text-white"
+                                className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
                             >
                                 <User className="w-5 h-5" /> Profile
                             </Link>
@@ -89,7 +96,7 @@ export function MobileNav({ user }: MobileNavProps) {
                             <Link 
                                 href="/support" 
                                 onClick={() => setIsOpen(false)}
-                                className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:text-white"
+                                className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
                             >
                                 <LifeBuoy className="w-5 h-5" /> Support
                             </Link>

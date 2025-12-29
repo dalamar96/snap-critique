@@ -3,6 +3,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import fs from 'fs'
+import path from 'path'
+import { LessonNode } from '../learning/actions'
 
 export async function updateSystemPrompt(content: string) {
     const supabase = await createClient()
@@ -612,3 +615,78 @@ export async function adminDeleteConversation(targetUserId: string) {
 }
 
 
+
+// --- LESSON MANAGEMENT ---
+
+export async function getAdminLessons() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    const { data: lessons, error } = await adminDb
+        .from('lessons')
+        .select('*')
+        .order('order_index', { ascending: true })
+
+    if (error) throw new Error(error.message)
+    return lessons as LessonNode[]
+}
+
+export async function upsertLesson(lesson: Partial<LessonNode>) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    // Clean payload
+    const payload: any = { ...lesson }
+    delete payload.is_completed
+    delete payload.children
+
+    const { error } = await adminDb
+        .from('lessons')
+        .upsert(payload)
+
+    if (error) throw new Error(error.message)
+    revalidatePath('/learning')
+    revalidatePath('/admin')
+}
+
+export async function deleteLesson(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const adminDb = createAdminClient()
+    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
+    if (!profile?.is_admin) throw new Error('Forbidden')
+
+    const { error } = await adminDb.from('lessons').delete().eq('id', id)
+    if (error) throw new Error(error.message)
+    revalidatePath('/learning')
+    revalidatePath('/admin')
+}
+
+export async function getLessonComponents() {
+    // Only available on server
+    const componentsDir = path.join(process.cwd(), 'src', 'components', 'lessons')
+
+    try {
+        if (!fs.existsSync(componentsDir)) return []
+
+        const files = fs.readdirSync(componentsDir)
+        return files
+            .filter(f => f.endsWith('.tsx') || f.endsWith('.jsx'))
+            .map(f => f.replace(/\.(tsx|jsx)$/, ''))
+    } catch (e) {
+        console.error("Failed to scan lesson components", e)
+        return []
+    }
+}

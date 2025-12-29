@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { unlockAnalysis } from '@/app/analysis/actions'
 import { InteractiveImage } from '@/components/comments/interactive-image'
 import { Comment } from '@/types/comments'
+import Link from 'next/link'
 
 interface AssessmentItem {
   title: string
@@ -31,6 +32,8 @@ interface AnalysisResult {
   technical_assessment: string
   next_steps: string[]
   preview_summary: string
+  goal_score?: number
+  goal_feedback?: string
 }
 
 const dummyAnalysis: Partial<AnalysisResult> = {
@@ -49,7 +52,8 @@ const dummyAnalysis: Partial<AnalysisResult> = {
     "Lorem ipsum dolor sit amet.",
     "Consectetur adipiscing elit.",
     "Sed do eiusmod tempor incididunt.",
-  ]
+  ],
+  goal_feedback: "Detailed feedback on your lesson goals will appear here once unlocked."
 }
 
 export function CritiqueDisplay({ 
@@ -63,7 +67,8 @@ export function CritiqueDisplay({
   comments,
   onImageClick,
   activePin,
-  isPinning
+  isPinning,
+  lessonContext
 }: { 
   analysis: AnalysisResult, 
   analysisId?: string, 
@@ -75,7 +80,8 @@ export function CritiqueDisplay({
   comments?: Comment[],
   onImageClick?: (x: number, y: number) => void,
   activePin?: { x: number, y: number } | null,
-  isPinning?: boolean
+  isPinning?: boolean,
+  lessonContext?: { title: string, slug: string } | null
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
@@ -120,24 +126,40 @@ export function CritiqueDisplay({
       {/* Header Score - Visible to All */}
       <div className="flex flex-col md:flex-row gap-6 md:items-start justify-between border-b border-white/20 pb-8 print:pb-4 print:border-black">
         <div>
-          <div className="flex items-center gap-2 text-primary text-xs uppercase tracking-widest mb-2 print:text-black">
-             <Search className="w-4 h-4" />
-             Analysis Complete
-          </div>
+           <div className="flex items-center gap-2 text-primary text-xs uppercase tracking-widest mb-2 print:text-black">
+              {lessonContext ? (
+                  <Link href={`/learning/${lessonContext.slug}`} className="hover:underline flex items-center gap-2">
+                       <Check className="w-4 h-4" /> Homework: {lessonContext.title}
+                  </Link>
+              ) : (
+                  <> <Search className="w-4 h-4" /> Analysis Complete </>
+              )}
+           </div>
           <h1 className="text-4xl font-bold text-white uppercase mb-4 print:text-black">{displayAnalysis.title}</h1>
           <p className="text-slate-400 max-w-xl border-l-2 border-white/10 pl-4 print:text-black print:border-black">{displayAnalysis.description}</p>
         </div>
         
         <div className="flex flex-col items-center md:items-end gap-6">
-            {/* Main Score Display */}
-            <div className="flex flex-col items-center border border-white/10 bg-white/5 p-6 w-64 text-center print:border-black print:bg-transparent">
-               <span className="text-xs uppercase tracking-widest text-slate-500 mb-2 print:text-black">Overall Score</span>
-               <div className="text-6xl font-black text-primary print:text-black">{displayAnalysis.score || displayAnalysis.scores?.overall}</div>
+            
+            <div className="flex gap-4">
+                {/* Main Score Display */}
+                <div className="flex flex-col items-center border border-white/10 bg-white/5 p-6 w-32 md:w-48 text-center print:border-black print:bg-transparent">
+                    <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 print:text-black">Overall</span>
+                    <div className="text-5xl font-black text-white print:text-black">{displayAnalysis.score || displayAnalysis.scores?.overall}</div>
+                </div>
+
+                {/* Optional Goal Score Display */}
+                {lessonContext && (
+                    <div className="flex flex-col items-center border border-primary/50 bg-primary/5 p-6 w-32 md:w-48 text-center print:border-black print:bg-transparent">
+                        <span className="text-[10px] uppercase tracking-widest text-primary mb-2 print:text-black">Goal Score</span>
+                        <div className="text-5xl font-black text-primary print:text-black">+{displayAnalysis.goal_score || 0}</div>
+                    </div>
+                )}
             </div>
 
             {/* Score Breakdown (Visible to All) */}
             {displayAnalysis.scores && (
-                <div className="grid grid-cols-3 gap-2 w-64">
+                <div className="grid grid-cols-3 gap-2 w-full max-w-sm">
                     <div className="flex flex-col items-center gap-1 group relative cursor-help">
                         <div className="text-xl font-bold text-white">{displayAnalysis.scores.composition}</div>
                         <span className="text-[10px] uppercase tracking-widest text-slate-500">Comp.</span>
@@ -169,6 +191,19 @@ export function CritiqueDisplay({
             </button>
         </div>
       </div>
+      
+      {/* Lesson Goal Feedback Section (If Homework) */}
+      {lessonContext && displayAnalysis.goal_feedback && (
+         <div className={cn("border border-primary/30 bg-primary/5 p-6 md:p-8 animate-in slide-in-from-left-4 print:border-black", !isUnlocked && "blur-sm select-none")}>
+             <h3 className="text-primary font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                 <Terminal className="w-5 h-5" />
+                 Lesson Goal Feedback
+             </h3>
+             <p className="text-slate-300 text-sm leading-relaxed print:text-black">
+                 {displayAnalysis.goal_feedback}
+             </p>
+         </div>
+      )}
 
       {/* Image - Visible to All */}
       {imageUrl && (
