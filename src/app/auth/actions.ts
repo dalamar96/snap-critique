@@ -17,6 +17,9 @@ export async function login(formData: FormData) {
     })
 
     if (error) {
+        if (error.message.includes('Email not confirmed')) {
+            redirect('/login?message=Please confirm your email address before logging in. Check your email (and junk folder) if you don\'t see it.')
+        }
         redirect('/login?error=Invalid credentials')
     }
 
