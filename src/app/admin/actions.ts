@@ -139,17 +139,35 @@ export async function getAdminDashboardData() {
     // 2.1 Fetch Auth Users for Verification Status
     // 2.1 Fetch Auth Users for Verification Status
     let authUsers: any[] = []
-    try {
-        // Reduced page size to prevent JSON parsing errors on large payloads
-        const { data, error: authError } = await adminDb.auth.admin.listUsers({ page: 1, perPage: 100 })
-        if (data?.users) authUsers = data.users
-        if (authError) console.warn("Auth Fetch Warning:", authError.message)
-    } catch (e: any) {
-        // Log less verbose error for JSON syntax issues
-        if (e.message?.includes('JSON')) {
-            console.warn("Auth Fetch Warning: Could not parse user list (JSON Error). Verification status may be incomplete.")
-        } else {
-            console.error("Auth Fetch Critical Failure", e)
+    let retryCount = 0
+    const maxRetries = 3
+
+    while (retryCount < maxRetries) {
+        try {
+            // Reduced page size to prevent JSON parsing errors on large payloads
+            const { data, error: authError } = await adminDb.auth.admin.listUsers({ page: 1, perPage: 50 })
+
+            if (authError) {
+                console.warn(`Auth Fetch Attempt ${retryCount + 1} Warning:`, authError.message)
+                throw new Error(authError.message)
+            }
+
+            if (data?.users) {
+                authUsers = data.users
+                break // Success
+            }
+        } catch (e: any) {
+            retryCount++
+            if (retryCount >= maxRetries) {
+                if (e.message?.includes('JSON')) {
+                    console.warn("Auth Fetch Warning: Could not parse user list (JSON Error) after retries. Verification status may be incomplete.")
+                } else {
+                    console.error("Auth Fetch Critical Failure after retries", e)
+                }
+            } else {
+                // Wait before retry
+                await new Promise(resolve => setTimeout(resolve, 1000))
+            }
         }
     }
 
