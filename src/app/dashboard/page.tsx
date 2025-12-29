@@ -68,27 +68,27 @@ export default async function DashboardPage() {
        <div className="max-w-6xl mx-auto">
           
           {/* Header */}
-          <div className="flex justify-between items-end mb-12 border-b border-white/10 pb-6">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between mb-8 md:mb-12 border-b border-white/10 pb-6">
              <div>
                 <div className="text-primary text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
                    <LayoutDashboard className="w-4 h-4" />
                    Overview
                 </div>
-                <h1 className="text-4xl font-bold text-white uppercase">Your Critiques</h1>
+                <h1 className="text-3xl md:text-4xl font-bold text-white uppercase">Your Critiques</h1>
              </div>
-             <div className="text-right flex flex-col items-end">
+             <div className="w-full md:w-auto flex flex-col items-start md:items-end">
                 <div className="text-slate-500 text-xs uppercase mb-1">Account</div>
                 <div className="text-white font-mono mb-2">{user.email}</div>
                 <div className="flex items-center gap-2">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-xs uppercase tracking-wide">
                         <span className="text-primary font-bold">{profile?.credits_balance || 0}</span> Credits Available
                     </div>
-                    <Link href="/pricing" className="text-[10px] uppercase font-bold text-primary hover:text-white transition-colors border border-primary/30 px-2 py-1 hover:bg-primary hover:border-primary text-center">
+                    <Link href="/pricing" className="text-[10px] uppercase font-bold text-primary hover:text-white transition-colors border border-primary/30 px-2 py-1 hover:bg-primary hover:border-primary text-center whitespace-nowrap">
                         + Get More
                     </Link>
                 </div>
-                <div className="mt-2 text-right">
-                     <Link href="/support" className="text-[10px] text-slate-500 hover:text-white uppercase tracking-widest flex items-center justify-end gap-1">
+                <div className="mt-2 w-full md:w-auto text-left md:text-right">
+                     <Link href="/support" className="text-[10px] text-slate-500 hover:text-white uppercase tracking-widest flex items-center md:justify-end gap-1">
                         Need Help? 
                      </Link>
                 </div>
