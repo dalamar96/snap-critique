@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import { Globe, Shield, Camera, Link as LinkIcon, MapPin, Grid, User } from 'lucide-react'
+import { Globe, Shield, Camera, Link as LinkIcon, MapPin, Grid, User, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { GalleryItem } from '@/app/gallery/gallery-item'
 
@@ -20,11 +20,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
-     const supabase = createAdminClient()
-     const authClient = await createClient()
-     const { data: { user: currentUser } } = await authClient.auth.getUser()
+    const supabase = createAdminClient()
+    const authClient = await createClient()
+    const { data: { user: currentUser } } = await authClient.auth.getUser()
 
-     const { data: profile } = await supabase
+    // Fetch Profile
+    const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', id)
@@ -40,6 +41,14 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
      if (!profile.is_public && !isOwner && !isAdmin) {
          return notFound() // Hide private profiles
      }
+
+    // Calculate XP
+    const { data: theoryPoints } = await supabase.from('user_lesson_progress').select('points_awarded').eq('user_id', id)
+    const { data: practicalPoints } = await supabase.from('user_homework_progress').select('points_awarded').eq('user_id', id)
+    
+    const totalTheory = theoryPoints?.reduce((acc, curr) => acc + curr.points_awarded, 0) || 0
+    const totalPractical = practicalPoints?.reduce((acc, curr) => acc + curr.points_awarded, 0) || 0
+    const totalXp = totalTheory + totalPractical
 
      // Fetch Public Analyses
      const { data: analyses } = await supabase
@@ -123,7 +132,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                     {/* Info */}
                     <div className="flex-1 space-y-4">
                         <div>
-                            <div className="flex flex-wrap items-center gap-3 mb-1">
+                             <div className="flex flex-wrap items-center gap-3 mb-1">
                                 <h1 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-tight">
                                     {profile.full_name || 'Photographer'}
                                 </h1>
@@ -132,6 +141,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                                         Public Profile
                                     </span>
                                 )}
+                                <span className="bg-yellow-500/10 text-yellow-500 text-[10px] px-2 py-0.5 rounded border border-yellow-500/20 uppercase font-bold tracking-wider flex items-center gap-1">
+                                    <Zap className="w-3 h-3 fill-yellow-500" />
+                                    {totalXp} XP
+                                </span>
                             </div>
                             
                             {profile.business_name && (
