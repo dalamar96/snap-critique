@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Sidebar, Activity, Users, Database, Globe, Search, Lock, List, ArrowRight, AlertTriangle } from 'lucide-react'
+import { StorageCleanupModal } from './storage-manager'
+import { Sidebar, Activity, Users, Database, Globe, Search, Lock, List, ArrowRight, AlertTriangle, HardDrive } from 'lucide-react'
 import Link from 'next/link'
 import { UserTable } from './user-table'
 import { UnclaimedTable } from './unclaimed-table'
@@ -15,6 +16,7 @@ interface DashboardData {
     totalRevenue: number
     recentErrors: number
     supportUnreadCount: number
+    orphanedCount: number
 }
 
 export function DashboardClient({ 
@@ -28,6 +30,7 @@ export function DashboardClient({
     const [showAllAnalyses, setShowAllAnalyses] = useState(false)
     const [showErrors, setShowErrors] = useState(false)
     const [showMessages, setShowMessages] = useState(false)
+    const [showStorage, setShowStorage] = useState(false)
 
     // Derived metrics
     const totalUsers = data.users.length
@@ -75,15 +78,28 @@ export function DashboardClient({
 
                  <KpiCard label="Est. Revenue" value={`$${totalRevenue.toFixed(2)}`} icon={<Search className="w-5 h-5 text-primary"/>} />
 
-                 <div onClick={() => setShowErrors(true)} className="cursor-pointer">
+                 <div onClick={() => setShowStorage(true)} className="cursor-pointer">
                     <KpiCard 
-                        label="System Errors (24h)" 
-                        value={data.recentErrors} 
-                        icon={<AlertTriangle className="w-5 h-5 text-red-500"/>} 
-                        highlight={data.recentErrors > 0}
+                        label="Orphaned Files" 
+                        value={data.orphanedCount} 
+                        icon={<HardDrive className="w-5 h-5 text-red-500"/>} 
+                        highlight={data.orphanedCount > 0}
                         highlightColor="text-red-500"
                         borderColor="border-red-500/50"
                     />
+                 </div>
+              </div>
+
+              {/* Error & Alerts Bar - Moved to compact row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div onClick={() => setShowErrors(true)} className="cursor-pointer">
+                     <div className={`bg-black border p-4 flex items-center justify-between rounded hover:bg-white/5 border-white/10 ${data.recentErrors > 0 ? 'border-red-500/50' : ''}`}>
+                         <div className="flex items-center gap-2">
+                             <AlertTriangle className={`w-5 h-5 ${data.recentErrors > 0 ? 'text-red-500' : 'text-slate-600'}`} />
+                             <span className="text-sm font-bold uppercase tracking-wider text-slate-300">System Errors (24h)</span>
+                         </div>
+                         <div className={`text-xl font-bold ${data.recentErrors > 0 ? 'text-red-500' : 'text-slate-500'}`}>{data.recentErrors}</div>
+                     </div>
                  </div>
               </div>
               
@@ -143,6 +159,7 @@ export function DashboardClient({
            {/* Modals */}
            <UnclaimedTable isOpen={showUnclaimed} onClose={() => setShowUnclaimed(false)} />
            <AllAnalysesTable isOpen={showAllAnalyses} onClose={() => setShowAllAnalyses(false)} />
+           <StorageCleanupModal isOpen={showStorage} onClose={() => setShowStorage(false)} />
            {showErrors && <ErrorLogTable onClose={() => setShowErrors(false)} />}
            {showMessages && <SupportInbox onClose={() => setShowMessages(false)} />}
         </div>

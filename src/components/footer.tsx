@@ -18,6 +18,16 @@ export function Footer() {
             <p className="text-sm text-slate-400 font-mono leading-relaxed">
               AI-powered photography critique engine. Get professional-grade feedback instantly.
             </p>
+            
+            <a href="https://www.producthunt.com/products/snap-critique/reviews/new?utm_source=badge-product_review&utm_medium=badge&utm_source=badge-snap-critique" target="_blank" className="hover:opacity-80 transition-opacity">
+                <img 
+                    src="https://api.producthunt.com/widgets/embed-image/v1/product_review.svg?product_id=1143009&theme=dark" 
+                    alt="Snap Critique - Because &quot;looks fine&quot; isn&apos;t a plan | Product Hunt" 
+                    style={{ width: '250px', height: '54px' }} 
+                    width="250" 
+                    height="54" 
+                />
+            </a>
           </div>
           <div className="space-y-4">
             <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-white">Product</h3>

@@ -225,12 +225,30 @@ export async function getAdminDashboardData() {
         .eq('is_from_admin', false)
         .is('read_at', null)
 
+    // 8. Fetch Orphaned Files Count (Expensive operation, but needed for KPI)
+    // We reuse logic from getOrphanedFiles but simplified for count if possible, 
+    // or just call it if we can't optimize. 
+    // Optimization: Just listing items and counting difference might be heavy if thousands of files.
+    // For now, let's just list heavily. 
+    // Actually, listing ALL files is too heavy for every dashboard load.
+    // Compromise: We will fetch the first 1000 and count orphans there, or just show "N/A" if too many?
+    // Let's call a simplified version that just gets a subset or assumes we can list.
+    // For MVP, we will list.
+    const { data: allFiles } = await adminDb.storage.from('submissions').list('uploads', { limit: 1000 })
+    const { data: allSubs } = await adminDb.from('submissions').select('image_path')
+    const usedPaths = new Set(allSubs?.map(s => s.image_path) || [])
+    const orphanCount = (allFiles || []).filter(f => {
+        const isImage = f.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+        return !usedPaths.has(`uploads/${f.name}`) && isImage
+    }).length
+
     return {
         users: userStats,
         unclaimedCount: unclaimedSubs.length,
         totalRevenue: totalRevenueCents / 100,
         recentErrors: errorCount || 0,
-        supportUnreadCount: unreadSupport || 0
+        supportUnreadCount: unreadSupport || 0,
+        orphanedCount: orphanCount
     }
 }
 
@@ -689,4 +707,72 @@ export async function getLessonComponents() {
         console.error("Failed to scan lesson components", e)
         return []
     }
+}
+
+export async function getOrphanedFiles() {
+    const adminDb = createAdminClient()
+
+    // 1. Get all files in storage
+    const { data: files, error: storageError } = await adminDb
+        .storage
+        .from('submissions')
+        .list('uploads', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } })
+
+    if (storageError || !files) {
+        console.error('List storage error:', storageError)
+        return []
+    }
+
+    // 2. Get all active image paths from DB
+    const { data: submissions, error: dbError } = await adminDb
+        .from('submissions')
+        .select('image_path')
+
+    if (dbError) {
+        console.error('List db error:', dbError)
+        return []
+    }
+
+    const activePaths = new Set(submissions?.map(s => s.image_path) || [])
+
+    // 3. Filter orphans
+    const orphansList = files.filter(f => {
+        const fullPath = `uploads/${f.name}`
+        const isImage = f.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+        return !activePaths.has(fullPath) && isImage
+    })
+
+    const orphans = await Promise.all(orphansList.map(async f => {
+        const { data } = await adminDb.storage
+            .from('submissions')
+            .createSignedUrl(`previews/${f.name}`, 3600)
+
+        return {
+            name: f.name,
+            size: f.metadata?.size || 0,
+            marketing_url: f.id,
+            created_at: f.created_at,
+            preview_url: data?.signedUrl || ''
+        }
+    }))
+
+    return orphans
+}
+
+export async function deleteStorageFile(filename: string) {
+    const adminDb = createAdminClient()
+
+    const { error: uploadError } = await adminDb
+        .storage
+        .from('submissions')
+        .remove([`uploads/${filename}`])
+
+    const { error: previewError } = await adminDb
+        .storage
+        .from('submissions')
+        .remove([`previews/${filename}`])
+
+    if (uploadError) return { error: 'Failed to delete upload' }
+
+    return { success: true }
 }
