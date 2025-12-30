@@ -196,8 +196,15 @@ export async function POST(req: NextRequest) {
         let analysisData;
 
         try {
-            const jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-            analysisData = JSON.parse(jsonStr);
+            const firstBrace = responseText.indexOf('{');
+            const lastBrace = responseText.lastIndexOf('}');
+
+            if (firstBrace !== -1 && lastBrace !== -1) {
+                const jsonStr = responseText.substring(firstBrace, lastBrace + 1);
+                analysisData = JSON.parse(jsonStr);
+            } else {
+                throw new Error("No JSON structure found in response");
+            }
         } catch (e) {
             Logger.error("JSON Parse Error", e, { responseText });
             await cleanupFiles(supabase, imagePath);

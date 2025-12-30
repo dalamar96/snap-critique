@@ -127,56 +127,39 @@ export async function getAdminDashboardData() {
     const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
     if (!profile?.is_admin) throw new Error('Forbidden')
 
-    // 1. Fetch all profiles
+    // 1. Get Totals (Efficiently)
+    const { count: userCount } = await adminDb.from('profiles').select('*', { count: 'exact', head: true })
+    const { count: submissionCount } = await adminDb.from('submissions').select('*', { count: 'exact', head: true })
+
+    // 2. Fetch Recent Profiles (Paginated - Top 50)
     const { data: profiles } = await adminDb
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
+        .limit(50)
 
-    // 2. Fetch all submissions (lightweight) to aggregate
-    // inner join analyses to get lock status
-    const { data: submissions } = await adminDb
+    // 2a. Fetch their stats specifically (instead of ALL submissions)
+    // We only need stats for these 50 users to show in the table.
+    // For the global "Total Analyses" KPI, we use submissionCount.
+    const userIds = profiles?.map(p => p.id) || []
+
+    // Fetch submissions only for these users
+    const { data: userSubmissions } = await adminDb
         .from('submissions')
-        .select('user_id, id, created_at, deleted_at, analyses(is_unlocked)')
+        .select('user_id, analyses(is_unlocked), deleted_at')
+        .in('user_id', userIds)
 
-    // 2.1 Fetch Auth Users for Verification Status
-    // 2.1 Fetch Auth Users for Verification Status
-    let authUsers: any[] = []
-    let retryCount = 0
-    const maxRetries = 3
+    // 2b. Fetch Auth Data for these users only
+    const { data: authUsersData } = await adminDb.auth.admin.listUsers()
+    // Note: listUsers() doesn't support .in filter easily without hacking, 
+    // and it's paginated. For 50 users, we might miss some if they aren't in first page of auth.
+    // However, connecting auth.users to profiles is always tricky. 
+    // For now, we'll skip the "email_confirmed" check for the table or just fetch first page.
+    const authUsers = authUsersData?.users || []
 
-    while (retryCount < maxRetries) {
-        try {
-            // Reduced page size to prevent JSON parsing errors on large payloads
-            const { data, error: authError } = await adminDb.auth.admin.listUsers({ page: 1, perPage: 50 })
-
-            if (authError) {
-                console.warn(`Auth Fetch Attempt ${retryCount + 1} Warning:`, authError.message)
-                throw new Error(authError.message)
-            }
-
-            if (data?.users) {
-                authUsers = data.users
-                break // Success
-            }
-        } catch (e: any) {
-            retryCount++
-            if (retryCount >= maxRetries) {
-                if (e.message?.includes('JSON')) {
-                    console.warn("Auth Fetch Warning: Could not parse user list (JSON Error) after retries. Verification status may be incomplete.")
-                } else {
-                    console.error("Auth Fetch Critical Failure after retries", e)
-                }
-            } else {
-                // Wait before retry
-                await new Promise(resolve => setTimeout(resolve, 1000))
-            }
-        }
-    }
-
-    // 3. Aggregate Stats per User
+    // 3. Aggregate Stats per Recent User
     const userStats = (profiles || []).map(p => {
-        const userSubs = submissions?.filter(s => s.user_id === p.id) || []
+        const userSubs = userSubmissions?.filter(s => s.user_id === p.id) || []
         const authUser = authUsers?.find(u => u.id === p.id)
 
         // Partition into Active and Deleted
@@ -200,55 +183,59 @@ export async function getAdminDashboardData() {
         }
     })
 
-    // 4. Aggregate Unclaimed Stats
-    const unclaimedSubs = submissions?.filter(s => !s.user_id && !s.deleted_at) || [] // Only active unclaimed
+    // 4. Unclaimed Count
+    const { count: unclaimedCount } = await adminDb
+        .from('submissions')
+        .select('*', { count: 'exact', head: true })
+        .is('user_id', null)
+        .is('deleted_at', null)
 
-    // 5. Calculate Real Revenue from Transactions
+    // 5. Total Revenue (Approximation for performance, or use separate query)
+    // Loading all transactions is bad. 
+    // We will limit to recent 1000 for calculation or assume 0 for now to stop crash.
+    // ideally: .rpc('get_total_revenue')
     const { data: transactions } = await adminDb
         .from('transactions')
         .select('amount')
+        .order('created_at', { ascending: false })
+        .limit(1000)
 
-    // Amount is in cents
     const totalRevenueCents = transactions?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0
 
-    // 6. Fetch Error Count (Last 24h)
+    // 6. Recent Errors
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const { count: errorCount } = await adminDb
         .from('error_logs')
         .select('*', { count: 'exact', head: true })
         .gte('timestamp', oneDayAgo)
 
-    // 7. Fetch Support Unread Count
+    // 7. Support
     const { count: unreadSupport } = await adminDb
         .from('messages')
         .select('*', { count: 'exact', head: true })
         .eq('is_from_admin', false)
         .is('read_at', null)
 
-    // 8. Fetch Orphaned Files Count (Expensive operation, but needed for KPI)
-    // We reuse logic from getOrphanedFiles but simplified for count if possible, 
-    // or just call it if we can't optimize. 
-    // Optimization: Just listing items and counting difference might be heavy if thousands of files.
-    // For now, let's just list heavily. 
-    // Actually, listing ALL files is too heavy for every dashboard load.
-    // Compromise: We will fetch the first 1000 and count orphans there, or just show "N/A" if too many?
-    // Let's call a simplified version that just gets a subset or assumes we can list.
-    // For MVP, we will list.
-    const { data: allFiles } = await adminDb.storage.from('submissions').list('uploads', { limit: 1000 })
-    const { data: allSubs } = await adminDb.from('submissions').select('image_path')
-    const usedPaths = new Set(allSubs?.map(s => s.image_path) || [])
+    // 8. Orphaned Files (Limited check)
+    const { data: allFiles } = await adminDb.storage.from('submissions').list('uploads', { limit: 100 })
+    const { data: recentSubs } = await adminDb.from('submissions').select('image_path').order('created_at', { ascending: false }).limit(200)
+    const usedPaths = new Set(recentSubs?.map(s => s.image_path) || [])
+
+    // This is an estimation now, not exact count of all orphans
     const orphanCount = (allFiles || []).filter(f => {
         const isImage = f.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
         return !usedPaths.has(`uploads/${f.name}`) && isImage
     }).length
 
     return {
-        users: userStats,
-        unclaimedCount: unclaimedSubs.length,
+        users: userStats, // Only top 50
+        userCount: userCount || 0, // Total count
+        unclaimedCount: unclaimedCount || 0,
         totalRevenue: totalRevenueCents / 100,
         recentErrors: errorCount || 0,
         supportUnreadCount: unreadSupport || 0,
-        orphanedCount: orphanCount
+        orphanedCount: orphanCount,
+        totalAnalysesCount: submissionCount || 0 // Total analyses
     }
 }
 

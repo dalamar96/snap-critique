@@ -12,11 +12,13 @@ import { SupportInbox } from './support-inbox'
 
 interface DashboardData {
     users: any[]
+    userCount: number
     unclaimedCount: number
     totalRevenue: number
     recentErrors: number
     supportUnreadCount: number
     orphanedCount: number
+    totalAnalysesCount: number
 }
 
 export function DashboardClient({ 
@@ -33,9 +35,9 @@ export function DashboardClient({
     const [showStorage, setShowStorage] = useState(false)
 
     // Derived metrics
-    const totalUsers = data.users.length
+    const totalUsers = data.userCount
     const totalRevenue = data.totalRevenue
-    const totalAnalyses = data.users.reduce((acc, u) => acc + (u.stats?.total_analyses || 0), 0) + data.unclaimedCount + data.users.reduce((acc, u) => acc + (u.stats?.deleted_analyses || 0), 0)
+    const totalAnalyses = data.totalAnalysesCount
 
     return (
         <div className="min-h-screen bg-slate-950 font-mono text-white">
