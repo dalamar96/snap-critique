@@ -45,7 +45,7 @@ export default function AboutPage() {
             <p className="text-slate-400 max-w-xl mx-auto">Every analysis is a deep dive into your image. Our AI breaks down your photography into four key dimensions.</p>
           </div>
 
-          <div className="grid lg:grid-cols-12 gap-12 items-start max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-12 gap-12 max-w-7xl mx-auto">
              
              {/* The Mock Report (Left Side) */}
              <div className="lg:col-span-7 bg-black border border-white/10 p-4 md:p-8 rounded-xl shadow-2xl font-mono relative overflow-hidden order-2 lg:order-1">
@@ -231,59 +231,60 @@ export default function AboutPage() {
              </div>
 
              {/* The Explainer (Right Side) */}
-             <div className="lg:col-span-5 space-y-12 lg:sticky lg:top-32 order-1 lg:order-2">
-                
-                {/* 1. Score & Summary */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shrink-0">
-                            <Star className="w-6 h-6" />
+             <div className="lg:col-span-5 order-1 lg:order-2">
+                <div className="lg:sticky lg:top-32 space-y-12 h-fit lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto no-scrollbar">
+                    {/* 1. Score & Summary */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shrink-0">
+                                <Star className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white uppercase">Objective Scoring</h3>
                         </div>
-                        <h3 className="text-2xl font-bold text-white uppercase">Objective Scoring</h3>
+                        <p className="text-slate-400 leading-relaxed text-lg">
+                            We don&apos;t just say &quot;nice shot.&quot; You get a concrete <span className="text-primary font-bold">Composition Score (0-100)</span> and a summarized breakdown of the artistic intent, helping you understand how your image lands at a glance.
+                        </p>
                     </div>
-                    <p className="text-slate-400 leading-relaxed text-lg">
-                        We don&apos;t just say &quot;nice shot.&quot; You get a concrete <span className="text-primary font-bold">Composition Score (0-100)</span> and a summarized breakdown of the artistic intent, helping you understand how your image lands at a glance.
-                    </p>
-                </div>
 
-                {/* 2. Technical */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 text-yellow-500 shrink-0">
-                            <Camera className="w-6 h-6" />
+                    {/* 2. Technical */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 text-yellow-500 shrink-0">
+                                <Camera className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white uppercase">Technical Deep Dive</h3>
                         </div>
-                        <h3 className="text-2xl font-bold text-white uppercase">Technical Deep Dive</h3>
+                        <p className="text-slate-400 leading-relaxed text-lg">
+                            Our AI simulates a technical inspection, analyzing <strong>Exposure</strong>, <strong>Focus</strong>, <strong>Grain</strong>, and <strong>Lighting</strong>. We point out what techniques were used successfully and where the technical execution could be tightened.
+                        </p>
                     </div>
-                    <p className="text-slate-400 leading-relaxed text-lg">
-                        Our AI simulates a technical inspection, analyzing <strong>Exposure</strong>, <strong>Focus</strong>, <strong>Grain</strong>, and <strong>Lighting</strong>. We point out what techniques were used successfully and where the technical execution could be tightened.
-                    </p>
-                </div>
 
-                {/* 3. Improvements */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-500 shrink-0">
-                            <ShieldCheck className="w-6 h-6" />
+                    {/* 3. Improvements */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-500 shrink-0">
+                                <ShieldCheck className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white uppercase">Prioritized Feedback</h3>
                         </div>
-                        <h3 className="text-2xl font-bold text-white uppercase">Prioritized Feedback</h3>
+                        <p className="text-slate-400 leading-relaxed text-lg">
+                            The core of Snap Critique. We identify specific areas that distract from your subject, ranked by priority. Whether it's a <span className="text-red-500 font-bold">High Priority</span> pose adjustment or a subtle lighting tweak, you'll know exactly what to fix.
+                        </p>
                     </div>
-                    <p className="text-slate-400 leading-relaxed text-lg">
-                        The core of Snap Critique. We identify specific areas that distract from your subject, ranked by priority. Whether it's a <span className="text-red-500 font-bold">High Priority</span> pose adjustment or a subtle lighting tweak, you'll know exactly what to fix.
-                    </p>
-                </div>
 
-                {/* 4. Action Plan */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20 text-orange-500 shrink-0">
-                            <Zap className="w-6 h-6" />
+                    {/* 4. Action Plan */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20 text-orange-500 shrink-0">
+                                <Zap className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white uppercase">Your Homework</h3>
                         </div>
-                        <h3 className="text-2xl font-bold text-white uppercase">Your Homework</h3>
+                        
+                        <p className="text-slate-400 leading-relaxed text-lg">
+                            Feedback is useless without action. We generate a tailored <strong>Action Plan</strong> with specific exercises or experiments you can try immediately to improve your next shot.
+                        </p>
                     </div>
-                    
-                    <p className="text-slate-400 leading-relaxed text-lg">
-                        Feedback is useless without action. We generate a tailored <strong>Action Plan</strong> with specific exercises or experiments you can try immediately to improve your next shot.
-                    </p>
                 </div>
              </div>
           </div>

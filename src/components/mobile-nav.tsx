@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, LayoutDashboard, User, LifeBuoy, LogOut, Camera, BookOpen, Info, Compass, Users } from 'lucide-react'
+import { Menu, X, LayoutDashboard, User, LifeBuoy, LogOut, Camera, BookOpen, Info, Compass, Users, Database } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { signout } from '@/app/auth/actions'
 
@@ -42,13 +42,24 @@ export function MobileNav({ user }: MobileNavProps) {
                 <nav className="flex flex-col gap-6">
                     <div className="space-y-4">
                         <h4 className="text-xs uppercase tracking-widest text-slate-500 font-bold">Menu</h4>
-                        <Link 
-                            href="/about" 
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
-                        >
-                            <Info className="w-5 h-5" /> About
-                        </Link>
+                        {!user && (
+                            <>
+                                <Link 
+                                    href="/about" 
+                                    onClick={() => setIsOpen(false)}
+                                    className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
+                                >
+                                    <Info className="w-5 h-5" /> About
+                                </Link>
+                                <Link 
+                                    href="/pricing" 
+                                    onClick={() => setIsOpen(false)}
+                                    className="flex items-center gap-3 text-lg font-mono text-slate-300 hover:!text-[#FF7A00]"
+                                >
+                                    <Database className="w-5 h-5" /> Pricing
+                                </Link>
+                            </>
+                        )}
                         <Link 
                             href="/gallery" 
                             onClick={() => setIsOpen(false)}

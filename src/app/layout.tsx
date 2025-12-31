@@ -38,8 +38,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark overflow-x-hidden" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground overflow-x-hidden`} suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground`} suppressHydrationWarning>
         <Header />
         {children}
         <Footer />

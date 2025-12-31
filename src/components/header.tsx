@@ -24,10 +24,19 @@ export async function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
-            <Link href="/about" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider transition-colors">
-                <Info className="w-4 h-4" />
-                About
-            </Link>
+            {!user && (
+                <>
+                     <Link href="/about" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider transition-colors">
+                        <Info className="w-4 h-4" />
+                        About
+                    </Link>
+                    <Link href="/pricing" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider transition-colors">
+                        <Database className="w-4 h-4" />
+                        Pricing
+                    </Link>
+                </>
+            )}
+
             <Link href="/gallery" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider transition-colors">
                 <Compass className="w-4 h-4" />
                 Explore
