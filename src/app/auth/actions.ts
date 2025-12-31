@@ -137,7 +137,7 @@ export async function forgotPassword(formData: FormData) {
     const siteUrl = process.env.NEXT_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_VERCEL_URL ?? 'https://www.snapcritique.com';
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${siteUrl}/update-password`,
+        redirectTo: `${siteUrl}/auth/callback?next=/update-password`,
     })
 
     if (error) {
