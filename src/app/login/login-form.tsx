@@ -3,6 +3,7 @@
 import { login, signup } from '../auth/actions'
 import { Check, Shield, Lock, UserPlus, LogIn, AlertTriangle } from 'lucide-react'
 import { useState } from 'react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
 
@@ -94,6 +95,11 @@ export function LoginForm() {
                   className="w-full bg-black border border-white/20 p-4 font-mono text-white focus:border-primary outline-none transition-all placeholder:text-slate-800"
                   placeholder="••••••••"
                 />
+             </div>
+             <div className="text-right">
+                <Link href="/forgot-password" className="text-[10px] text-slate-500 hover:text-primary transition-colors font-mono uppercase tracking-wider">
+                    Forgot Password?
+                </Link>
              </div>
           </div>
 

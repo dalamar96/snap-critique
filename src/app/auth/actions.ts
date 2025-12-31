@@ -130,3 +130,41 @@ export async function signout() {
     revalidatePath('/', 'layout')
     redirect('/login')
 }
+
+export async function forgotPassword(formData: FormData) {
+    const supabase = await createClient()
+    const email = formData.get('email') as string
+    const siteUrl = process.env.NEXT_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_VERCEL_URL ?? 'https://www.snapcritique.com';
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${siteUrl}/update-password`,
+    })
+
+    if (error) {
+        console.error('Reset password error:', error)
+        redirect('/forgot-password?error=Could not send reset link. Please try again.')
+    }
+
+    redirect('/forgot-password?message=Check your email for the password reset link.')
+}
+
+export async function updatePassword(formData: FormData) {
+    const supabase = await createClient()
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+
+    if (password !== confirmPassword) {
+        redirect('/update-password?error=Passwords do not match')
+    }
+
+    const { error } = await supabase.auth.updateUser({
+        password: password
+    })
+
+    if (error) {
+        console.error('Update password error:', error)
+        redirect('/update-password?error=Could not update password. Please try again.')
+    }
+
+    redirect('/dashboard')
+}
