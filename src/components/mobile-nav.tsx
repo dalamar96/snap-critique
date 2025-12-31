@@ -34,8 +34,8 @@ export function MobileNav({ user }: MobileNavProps) {
             {/* Menu Content */}
             <div 
                 className={cn(
-                    "fixed top-16 right-0 w-full sm:w-80 h-[calc(100dvh-4rem)] bg-black border-l border-white/20 z-[60] transform transition-transform duration-200 ease-in-out px-6 py-8 flex flex-col gap-6 shadow-2xl overflow-y-auto",
-                    isOpen ? "translate-x-0" : "translate-x-full"
+                    "fixed top-16 right-0 w-full sm:w-80 h-[calc(100dvh-4rem)] bg-black border-l border-white/20 z-[60] transform transition-all duration-200 ease-in-out px-6 py-8 flex flex-col gap-6 shadow-2xl overflow-y-auto",
+                    isOpen ? "translate-x-0 opacity-100 visible" : "translate-x-full opacity-0 invisible"
                 )}
                 style={{ backgroundColor: '#000000' }}
             >

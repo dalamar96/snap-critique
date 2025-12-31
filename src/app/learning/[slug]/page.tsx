@@ -12,6 +12,10 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
+    if (!user) {
+        redirect('/login?view=signup')
+    }
+
     const lesson = await getLessonBySlug(slug)
 
     if (!lesson) {

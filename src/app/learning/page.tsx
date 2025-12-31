@@ -8,7 +8,7 @@ export default async function LearningPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/login?view=signup')
   }
 
   const [tree, totalPoints] = await Promise.all([
