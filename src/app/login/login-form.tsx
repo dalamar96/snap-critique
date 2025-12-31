@@ -105,9 +105,14 @@ export function LoginForm() {
 
           <div className="flex flex-col gap-4">
              {isSignUp ? (
+                <>
                  <button formAction={signup} className="btn-primary py-4 text-xs flex items-center justify-center gap-2">
                     <UserPlus className="w-4 h-4" /> Create Account
                  </button>
+                 <div className="text-[10px] text-slate-500 text-center">
+                    By signing up, you agree to our <Link href="/terms" className="underline hover:text-white">Terms</Link> and <Link href="/privacy" className="underline hover:text-white">Privacy Policy</Link>.
+                 </div>
+                </>
              ) : (
                  <button formAction={login} className="btn-primary py-4 text-xs flex items-center justify-center gap-2">
                     <LogIn className="w-4 h-4" /> Log In &gt;&gt;
