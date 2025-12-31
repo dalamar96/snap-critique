@@ -139,7 +139,7 @@ export function UploadZone({ userCredits = null, isGuest = true }: UploadZonePro
        <div className="absolute bottom-0 inset-x-0 bg-white/5 p-2 flex justify-between font-mono text-[10px] text-white/40 uppercase">
           <span className="pl-8 flex items-center gap-2">
               {isGuest ? (
-                  <span className="text-primary">Guest Mode (Free)</span>
+                  <span className="text-primary">Guest Mode (5 Free w/ Sign Up!)</span>
               ) : isBlocked ? (
                   <span className="text-red-500 font-bold flex items-center gap-1">
                       Insufficient Credits <Link href="/pricing" className="underline ml-1">Get More</Link>

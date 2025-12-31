@@ -45,6 +45,14 @@ export default async function Home() {
             Because "looks fine" isn't a plan. Get professional-grade feedback instantly.
           </p>
 
+          {!user && (
+            <div className="bg-primary/10 border border-primary/30 p-3 rounded-lg inline-block">
+               <p className="text-primary font-bold font-mono text-sm uppercase tracking-wide">
+                 New? Sign up securely and get 5 FREE credits.
+               </p>
+            </div>
+          )}
+
           <p className="text-xs md:text-sm text-slate-500 font-mono">
              Upload your photo. Tell us your intent. We'll handle the rest.
           </p>
