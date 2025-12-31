@@ -1,14 +1,21 @@
 'use client'
+import { User } from '@supabase/supabase-js'
 
 import { useState } from 'react'
 import { Check, Zap, Star, Shield, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
-export function PricingContent() {
+export function PricingContent({ user }: { user: User | null }) {
   const [loadingPkg, setLoadingPkg] = useState<string | null>(null)
+  const router = useRouter()
 
   const handlePurchase = async (pkgId: string) => {
+      if (!user) {
+          router.push('/login?view=signup')
+          return
+      }
       setLoadingPkg(pkgId)
       try {
           const res = await fetch('/api/checkout', {
@@ -18,7 +25,8 @@ export function PricingContent() {
           })
           const data = await res.json()
           if (data.url) {
-              window.location.href = data.url
+              window.open(data.url, '_blank')
+              setLoadingPkg(null)
           } else {
               alert('Checkout Error')
               setLoadingPkg(null)
