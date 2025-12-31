@@ -56,6 +56,11 @@ export default async function Home() {
           <p className="text-xs md:text-sm text-slate-500 font-mono">
              Upload your photo. Tell us your intent. We'll handle the rest.
           </p>
+
+          <div className="flex flex-wrap items-center gap-4 text-[10px] sm:text-xs text-slate-400 font-mono uppercase tracking-wider pt-2">
+            <span className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-primary" /> No Subscriptions</span>
+            <span className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-primary" /> Credits Never Expire</span>
+          </div>
         </div>
 
         {/* Right Column: Upload HUD */}
