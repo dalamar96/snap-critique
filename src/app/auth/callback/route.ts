@@ -29,47 +29,8 @@ export async function GET(request: Request) {
                     console.error('Callback Profile Upsert Error:', profileError)
                 }
 
-                // Auto-Unlock Analysis if redirected there
-                if (next.startsWith('/analysis/')) {
-                    const submissionId = next.split('/').pop()
-                    if (submissionId) {
-                        try {
-                            // Check current credits
-                            const { data: profile } = await adminSupabase
-                                .from('profiles')
-                                .select('credits_balance')
-                                .eq('id', user.id)
-                                .single()
-
-                            if (profile && profile.credits_balance > 0) {
-                                // Check if not already unlocked
-                                const { data: analysis } = await adminSupabase
-                                    .from('analyses')
-                                    .select('is_unlocked')
-                                    .eq('submission_id', submissionId)
-                                    .single()
-
-                                if (analysis && !analysis.is_unlocked) {
-                                    // Perform Transaction: Deduct Credit & Unlock
-                                    // Note: Ideally this should be an RPC or transaction, but parallel requests are unlikely here.
-                                    await adminSupabase
-                                        .from('profiles')
-                                        .update({ credits_balance: profile.credits_balance - 1 })
-                                        .eq('id', user.id)
-
-                                    await adminSupabase
-                                        .from('analyses')
-                                        .update({ is_unlocked: true })
-                                        .eq('submission_id', submissionId)
-
-                                    console.log(`[Auth Callback] Auto-unlocked submission ${submissionId} for user ${user.id}`)
-                                }
-                            }
-                        } catch (unlockError) {
-                            console.error('Auto-unlock failed:', unlockError)
-                        }
-                    }
-                }
+                // Auto-unlock logic removed to prevent race conditions.
+                // Claim and unlock logic is now centralized in /analysis/[id]/page.tsx
             }
 
             const forwardedHost = request.headers.get('x-forwarded-host')

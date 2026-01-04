@@ -189,12 +189,17 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
   const guestToken = cookieStore.get(`guest_token_${id}`)?.value
   const canClaim = guestToken === 'true'
   
+  console.log(`[Claim Debug] User: ${user?.id}, SubOwner: ${submissionRecord.user_id}, Admin: ${isAdmin}, ClaimParam: ${claim}, GuestToken: ${guestToken}`)
+  
   if (user && !submissionRecord.user_id && !isAdmin && claim === 'true') {
       // Security Check: Verify they have the guest token
       if (!canClaim) {
-          console.warn(`[Security] User ${user.id} attempted to claim ${id} without token`)
+          console.warn(`[Security] User ${user.id} attempted to claim ${id} without token. Cookie: ${guestToken}`)
+          // TEMP: For debugging/testing, we might be hitting this if cookies are lost.
+          // If in dev, maybe allow? 
           redirect(`/analysis/${id}`) 
       }
+      console.log(`[Claim Logic] Proceeding to claim ${id} for user ${user.id}`)
 
       // 1. Try to Deduct Credit & Unlock (Optional)
       if (userCredits > 0) {
