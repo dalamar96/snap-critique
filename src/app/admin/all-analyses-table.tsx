@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAllSubmissions, hardDeleteSubmission } from './actions'
-import { Loader2, ExternalLink, Image as ImageIcon, X, Trash2 } from 'lucide-react'
+import { getAllSubmissions, hardDeleteSubmission, restoreSubmission } from './actions'
+import { Loader2, ExternalLink, Image as ImageIcon, X, Trash2, Undo } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -129,29 +129,65 @@ export function AllAnalysesTable({
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <Link 
-                                                    href={`/analysis/${sub.id}`} 
-                                                    target="_blank"
-                                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-primary hover:text-black border border-white/10 rounded transition-all text-xs font-bold uppercase"
-                                                >
-                                                    <ExternalLink className="w-3 h-3" />
-                                                </Link>
-                                                
-                                                {!sub.profiles && (
-                                                     <button 
-                                                        onClick={async (e) => {
-                                                            e.stopPropagation();
-                                                            if (confirm('Permanently delete this unrelated analysis?')) {
-                                                                await hardDeleteSubmission(sub.id)
-                                                                // Optimistic update
-                                                                setSubmissions(prev => prev.filter(p => p.id !== sub.id))
-                                                            }
-                                                        }}
-                                                        className="p-2 hover:bg-red-500/20 text-slate-500 hover:text-red-500 rounded transition-colors"
-                                                        title="Delete Unclaimed Analysis"
-                                                     >
-                                                         <Trash2 className="w-4 h-4" />
-                                                     </button>
+                                                {sub.deleted_at ? (
+                                                    <>
+                                                        <button 
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation()
+                                                                if (confirm('Restore this analysis?')) {
+                                                                    await restoreSubmission(sub.id)
+                                                                    // Optimistic update: mark as active
+                                                                    setSubmissions(prev => prev.map(p => 
+                                                                        p.id === sub.id ? { ...p, deleted_at: null } : p
+                                                                    ))
+                                                                }
+                                                            }}
+                                                            className="p-2 hover:bg-blue-500/20 text-slate-500 hover:text-blue-500 rounded transition-colors"
+                                                            title="Restore Analysis"
+                                                        >
+                                                            <Undo className="w-4 h-4" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation()
+                                                                if (confirm('Permanently delete this analysis? This cannot be undone.')) {
+                                                                    await hardDeleteSubmission(sub.id)
+                                                                    setSubmissions(prev => prev.filter(p => p.id !== sub.id))
+                                                                }
+                                                            }}
+                                                            className="p-2 hover:bg-red-500/20 text-slate-500 hover:text-red-500 rounded transition-colors"
+                                                            title="Permanently Delete"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Link 
+                                                            href={`/analysis/${sub.id}`} 
+                                                            target="_blank"
+                                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-primary hover:text-black border border-white/10 rounded transition-all text-xs font-bold uppercase"
+                                                        >
+                                                            <ExternalLink className="w-3 h-3" />
+                                                        </Link>
+                                                        
+                                                        {!sub.profiles && (
+                                                             <button 
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm('Permanently delete this unrelated analysis?')) {
+                                                                        await hardDeleteSubmission(sub.id)
+                                                                        // Optimistic update
+                                                                        setSubmissions(prev => prev.filter(p => p.id !== sub.id))
+                                                                    }
+                                                                }}
+                                                                className="p-2 hover:bg-red-500/20 text-slate-500 hover:text-red-500 rounded transition-colors"
+                                                                title="Delete Unclaimed Analysis"
+                                                             >
+                                                                 <Trash2 className="w-4 h-4" />
+                                                             </button>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </td>
