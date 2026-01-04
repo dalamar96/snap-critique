@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function login(formData: FormData) {
     const supabase = await createClient()
+    const adminSupabase = createAdminClient()
 
     const email = formData.get('email') as string
     const password = formData.get('password') as string
@@ -24,7 +25,6 @@ export async function login(formData: FormData) {
     }
 
     if (data.user) {
-        const adminSupabase = createAdminClient()
         // Ensure profile exists. If not, create with 5 credits. If exists, do nothing.
         await adminSupabase.from('profiles').upsert({
             id: data.user.id,
@@ -36,6 +36,59 @@ export async function login(formData: FormData) {
 
     const next = formData.get('next') as string
     const redirectUrl = next && next.startsWith('/') ? next : '/dashboard'
+
+    // Link Guest Submission if 'next' param points to an analysis
+    if (next && next.startsWith('/analysis/')) {
+        const path = next.split('?')[0] // /analysis/[id]
+        const submissionId = path.split('/').pop()
+
+        if (submissionId) {
+            const cookieStore = await headers() // cookies() or headers() - nextjs server actions
+            // In Server Actions, cookies() is read-only or read-write depending on context.
+            // Using 'next/headers' cookies().
+            const { cookies } = await import('next/headers')
+            const cookieStoreVals = await cookies()
+            const guestToken = cookieStoreVals.get(`guest_token_${submissionId}`)?.value
+
+            if (guestToken === 'true') {
+                const { error: linkError } = await adminSupabase
+                    .from('submissions')
+                    .update({ user_id: data.user.id })
+                    .eq('id', submissionId)
+                    .is('user_id', null) // Only claim if unclaimed
+
+                if (!linkError) {
+                    await adminSupabase
+                        .from('analyses')
+                        .update({ user_id: data.user.id })
+                        .eq('submission_id', submissionId)
+
+                    // Attempt auto-deduct if they have credits (since we are claiming now)
+                    // We can check the profile we just upserted/fetched
+                    const { data: profile } = await adminSupabase
+                        .from('profiles')
+                        .select('credits_balance')
+                        .eq('id', data.user.id)
+                        .single()
+
+                    if (profile && profile.credits_balance > 0) {
+                        // Deduct & Unlock
+                        await adminSupabase.from('profiles')
+                            .update({ credits_balance: profile.credits_balance - 1 })
+                            .eq('id', data.user.id)
+
+                        await adminSupabase.from('analyses')
+                            .update({ is_unlocked: true })
+                            .eq('submission_id', submissionId)
+                    }
+                } else {
+                    console.error('Failed to link submission on login:', linkError)
+                }
+            } else {
+                console.warn(`[Login Claim] Missing or invalid guest token for ${submissionId}`)
+            }
+        }
+    }
 
     revalidatePath('/', 'layout')
     redirect(redirectUrl)
