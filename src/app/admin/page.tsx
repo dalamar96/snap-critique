@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getIsAdmin } from '@/lib/auth/require-admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Lock } from 'lucide-react'
@@ -18,13 +19,9 @@ export default async function AdminPage() {
 
   // Admin Check
   const adminDb = createAdminClient()
-  const { data: profile } = await adminDb
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single()
+  const isAdmin = await getIsAdmin(adminDb, user.id)
 
-  if (!profile?.is_admin) {
+  if (!isAdmin) {
      return (
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
            <div className="text-center space-y-4">

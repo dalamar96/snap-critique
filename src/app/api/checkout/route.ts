@@ -47,7 +47,6 @@ export async function POST(req: NextRequest) {
                 }
             });
             return NextResponse.json({ url: session.url });
-            return NextResponse.json({ url: session.url });
         }
 
         return NextResponse.json({ error: 'Package ID required' }, { status: 400 });

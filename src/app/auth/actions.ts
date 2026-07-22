@@ -2,8 +2,19 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { claimGuestSubmission } from '@/lib/claim-guest-submission'
+
+// Given a `next` redirect target, returns the submission ID if it points at
+// an analysis page, otherwise null. Shared by login() and signup() so both
+// extract the ID from `next` the same way.
+function extractSubmissionIdFromNext(next: string | undefined): string | null {
+    if (!next || !next.startsWith('/analysis/')) return null
+    const path = next.split('?')[0] // /analysis/[id]
+    return path.split('/').pop() || null
+}
 
 export async function login(formData: FormData) {
     const supabase = await createClient()
@@ -38,63 +49,22 @@ export async function login(formData: FormData) {
     const redirectUrl = next && next.startsWith('/') ? next : '/dashboard'
 
     // Link Guest Submission if 'next' param points to an analysis
-    if (next && next.startsWith('/analysis/')) {
-        const path = next.split('?')[0] // /analysis/[id]
-        const submissionId = path.split('/').pop()
+    const submissionId = extractSubmissionIdFromNext(next)
+    if (submissionId && data.user) {
+        const cookieStore = await cookies()
+        const guestToken = cookieStore.get(`guest_token_${submissionId}`)?.value
 
-        if (submissionId) {
-            const cookieStore = await headers() // cookies() or headers() - nextjs server actions
-            // In Server Actions, cookies() is read-only or read-write depending on context.
-            // Using 'next/headers' cookies().
-            const { cookies } = await import('next/headers')
-            const cookieStoreVals = await cookies()
-            const guestToken = cookieStoreVals.get(`guest_token_${submissionId}`)?.value
-
-            if (guestToken === 'true') {
-                const { error: linkError } = await adminSupabase
-                    .from('submissions')
-                    .update({ user_id: data.user.id })
-                    .eq('id', submissionId)
-                    .is('user_id', null) // Only claim if unclaimed
-
-                if (!linkError) {
-                    await adminSupabase
-                        .from('analyses')
-                        .update({ user_id: data.user.id })
-                        .eq('submission_id', submissionId)
-
-                    // Attempt auto-deduct if they have credits (since we are claiming now)
-                    // We can check the profile we just upserted/fetched
-                    const { data: profile } = await adminSupabase
-                        .from('profiles')
-                        .select('credits_balance')
-                        .eq('id', data.user.id)
-                        .single()
-
-                    if (profile && profile.credits_balance > 0) {
-                        // Deduct & Unlock
-                        await adminSupabase.from('profiles')
-                            .update({ credits_balance: profile.credits_balance - 1 })
-                            .eq('id', data.user.id)
-
-                        await adminSupabase.from('analyses')
-                            .update({ is_unlocked: true })
-                            .eq('submission_id', submissionId)
-                    }
-                } else {
-                    console.error('Failed to link submission on login:', linkError)
-                }
-            } else {
-                console.warn(`[Login Claim] Missing or invalid guest token for ${submissionId}`)
-            }
-        }
+        await claimGuestSubmission({
+            adminDb: adminSupabase,
+            userId: data.user.id,
+            submissionId,
+            guestToken,
+        })
     }
 
     revalidatePath('/', 'layout')
     redirect(redirectUrl)
 }
-
-import { headers } from 'next/headers'
 
 export async function signup(formData: FormData) {
     const supabase = await createClient()
@@ -111,7 +81,6 @@ export async function signup(formData: FormData) {
     if (emailRedirectTo && next) {
         emailRedirectTo += `?next=${encodeURIComponent(next)}`
     }
-    console.log("Site URL for redirect resolved to: ", emailRedirectTo);
     // 1. Sign Up Auth User
     const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -141,29 +110,17 @@ export async function signup(formData: FormData) {
         }
 
         // 3. Link Guest Submission if 'next' param points to an analysis
-        if (next && next.startsWith('/analysis/')) {
-            // Extract ID effectively, ignoring query params like ?claim=true
-            const path = next.split('?')[0] // /analysis/[id]
-            const submissionId = path.split('/').pop()
-            if (submissionId) {
-                const { error: linkError } = await adminSupabase
-                    .from('submissions')
-                    .update({ user_id: authData.user.id })
-                    .eq('id', submissionId)
+        const submissionId = extractSubmissionIdFromNext(next)
+        if (submissionId) {
+            const cookieStore = await cookies()
+            const guestToken = cookieStore.get(`guest_token_${submissionId}`)?.value
 
-                if (linkError) {
-                    console.error('Failed to link submission:', linkError)
-                }
-
-                const { error: analysisError } = await adminSupabase
-                    .from('analyses')
-                    .update({ user_id: authData.user.id })
-                    .eq('submission_id', submissionId)
-
-                if (analysisError) {
-                    console.error('Failed to link analysis:', analysisError)
-                }
-            }
+            await claimGuestSubmission({
+                adminDb: adminSupabase,
+                userId: authData.user.id,
+                submissionId,
+                guestToken,
+            })
         }
     }
 

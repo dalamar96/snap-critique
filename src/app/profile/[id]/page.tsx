@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { getIsAdmin } from '@/lib/auth/require-admin'
 import { notFound, redirect } from 'next/navigation'
 import { Globe, Shield, Camera, Link as LinkIcon, MapPin, Grid, User, Zap } from 'lucide-react'
 import Link from 'next/link'
@@ -36,7 +37,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
      // Privacy Check
      const isOwner = currentUser?.id === profile.id
-     const isAdmin = currentUser && (await supabase.from('profiles').select('is_admin').eq('id', currentUser.id).single()).data?.is_admin
+     const isAdmin = currentUser ? await getIsAdmin(supabase, currentUser.id) : false
 
      if (!profile.is_public && !isOwner && !isAdmin) {
          return notFound() // Hide private profiles

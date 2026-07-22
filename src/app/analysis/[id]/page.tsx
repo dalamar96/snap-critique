@@ -2,10 +2,10 @@ import { AnalysisContainer } from '@/components/analysis-container'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
 import { ShareAnalysisDialog } from '@/components/share-analysis-dialog'
 import { Metadata } from 'next'
 import { cookies } from 'next/headers'
+import { claimGuestSubmission } from '@/lib/claim-guest-submission'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -187,50 +187,17 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
   const { claim } = await searchParams
   const cookieStore = await cookies()
   const guestToken = cookieStore.get(`guest_token_${id}`)?.value
-  const canClaim = guestToken === 'true'
-  
-  console.log(`[Claim Debug] User: ${user?.id}, SubOwner: ${submissionRecord.user_id}, Admin: ${isAdmin}, ClaimParam: ${claim}, GuestToken: ${guestToken}`)
-  
+
   if (user && !submissionRecord.user_id && !isAdmin && claim === 'true') {
-      // Security Check: Verify they have the guest token
-      if (!canClaim) {
-          console.warn(`[Security] User ${user.id} attempted to claim ${id} without token. Cookie: ${guestToken}`)
-          // TEMP: For debugging/testing, we might be hitting this if cookies are lost.
-          // If in dev, maybe allow? 
-          redirect(`/analysis/${id}`) 
-      }
-      console.log(`[Claim Logic] Proceeding to claim ${id} for user ${user.id}`)
+      await claimGuestSubmission({
+          adminDb: supabase,
+          userId: user.id,
+          submissionId: id,
+          guestToken,
+      })
 
-      // 1. Try to Deduct Credit & Unlock (Optional)
-      if (userCredits > 0) {
-          // Attempt RPC (Atomic)
-          const { error: rpcError } = await supabase.rpc('decrement_credits', { userid: user.id, count: 1 })
-          
-          if (rpcError) {
-             console.error("[Claim] RPC Error", rpcError)
-             // Fallback to direct update if RPC fails
-             await supabase
-               .from('profiles')
-               .update({ credits_balance: userCredits - 1 })
-               .eq('id', user.id)
-          } else {
-              // Only unlock if deduction succeeded
-              await supabase
-                .from('analyses')
-                .update({ is_unlocked: true })
-                .eq('submission_id', id)
-          }
-      }
-
-      // 2. Assign Ownership (Always)
-      await supabase
-        .from('submissions')
-        .update({ user_id: user.id })
-        .eq('id', id)
-        
-      submissionRecord.user_id = user.id // Update local record to reflect claim
-      
-      // Redirect to remove claim param
+      // Redirect to remove claim param regardless of outcome — a failed
+      // claim (e.g. missing/stale token) just re-renders as still-guest.
       redirect(`/analysis/${id}`)
   }
 

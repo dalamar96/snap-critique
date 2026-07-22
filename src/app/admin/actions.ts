@@ -2,31 +2,14 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/auth/require-admin'
 import { revalidatePath } from 'next/cache'
 import fs from 'fs'
 import path from 'path'
 import { LessonNode } from '../learning/actions'
 
 export async function updateSystemPrompt(content: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-        throw new Error('Unauthorized')
-    }
-
-    const adminDb = createAdminClient()
-
-    // Verify admin
-    const { data: profile } = await adminDb
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
-
-    if (!profile?.is_admin) {
-        throw new Error('Forbidden')
-    }
+    const { adminDb } = await requireAdmin()
 
     // Deactivate old prompts
     await adminDb
@@ -55,21 +38,7 @@ export async function updateSystemPrompt(content: string) {
 }
 
 export async function getUserAnalyses(userId: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-
-    // Verify admin
-    const { data: profile } = await adminDb
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
-
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     // Fetch submissions
     const { data: submissions, error } = await adminDb
@@ -117,15 +86,7 @@ export async function getUserAnalyses(userId: string) {
 }
 
 export async function getAdminDashboardData() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-
-    // Verify Admin
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     // 1. Get Totals (Efficiently)
     const { count: userCount } = await adminDb.from('profiles').select('*', { count: 'exact', head: true })
@@ -240,13 +201,7 @@ export async function getAdminDashboardData() {
 }
 
 export async function getAllSubmissions() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     const { data: submissions } = await adminDb
         .from('submissions')
@@ -272,13 +227,7 @@ export async function getAllSubmissions() {
 
 
 export async function restoreSubmission(submissionId: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     const { error } = await adminDb
         .from('submissions')
@@ -290,13 +239,7 @@ export async function restoreSubmission(submissionId: string) {
 }
 
 export async function hardDeleteSubmission(submissionId: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     // 1. Get File Paths
     const { data: submission } = await adminDb
@@ -346,13 +289,7 @@ export async function hardDeleteSubmission(submissionId: string) {
 }
 
 export async function getUnclaimedSubmissions() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     const { data: submissions } = await adminDb
         .from('submissions')
@@ -376,13 +313,7 @@ export async function getUnclaimedSubmissions() {
 }
 
 export async function updateUserCredits(userId: string, amount: number) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { user, adminDb } = await requireAdmin()
 
     // 1. Perform Update (Direct Admin Write)
     // We fetch first to ensure we have the latest (though atomic RPC is better, strictly speaking, but this is admin panel)
@@ -419,13 +350,7 @@ export async function updateUserCredits(userId: string, amount: number) {
 }
 
 export async function getErrorLogs(limit = 100) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     // 1. Fetch Logs (Raw)
     const { data: logs, error } = await adminDb
@@ -465,14 +390,7 @@ export async function getErrorLogs(limit = 100) {
 }
 
 export async function deleteErrorLog(logId: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    // Verify admin
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     await adminDb.from('error_logs').delete().eq('id', logId)
     revalidatePath('/admin')
@@ -481,13 +399,7 @@ export async function deleteErrorLog(logId: string) {
 // --- MESSAGING ---
 
 export async function getAllConversations() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     // Fetch all messages ordered by latest
     const { data: messages, error } = await adminDb
@@ -550,13 +462,7 @@ export async function getConversation(targetUserId: string) {
 }
 
 export async function replyToUser(targetUserId: string, content: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     await adminDb.from('messages').insert({
         user_id: targetUserId,
@@ -585,14 +491,7 @@ export async function markAdminRead(targetUserId: string) {
 }
 
 export async function adminResolveConversation(targetUserId: string, status: 'open' | 'resolved') {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    // Verify admin
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     await adminDb.from('conversation_status').upsert({
         user_id: targetUserId,
@@ -604,14 +503,7 @@ export async function adminResolveConversation(targetUserId: string, status: 'op
 }
 
 export async function adminDeleteConversation(targetUserId: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    // Verify admin
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     await adminDb.from('messages').delete().eq('user_id', targetUserId)
     await adminDb.from('conversation_status').delete().eq('user_id', targetUserId)
@@ -624,13 +516,7 @@ export async function adminDeleteConversation(targetUserId: string) {
 // --- LESSON MANAGEMENT ---
 
 export async function getAdminLessons() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     const { data: lessons, error } = await adminDb
         .from('lessons')
@@ -642,13 +528,7 @@ export async function getAdminLessons() {
 }
 
 export async function upsertLesson(lesson: Partial<LessonNode>) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     // Clean payload
     const payload: any = { ...lesson }
@@ -665,13 +545,7 @@ export async function upsertLesson(lesson: Partial<LessonNode>) {
 }
 
 export async function deleteLesson(id: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
-
-    const adminDb = createAdminClient()
-    const { data: profile } = await adminDb.from('profiles').select('is_admin').eq('id', user.id).single()
-    if (!profile?.is_admin) throw new Error('Forbidden')
+    const { adminDb } = await requireAdmin()
 
     const { error } = await adminDb.from('lessons').delete().eq('id', id)
     if (error) throw new Error(error.message)

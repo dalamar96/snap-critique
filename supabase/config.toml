@@ -1,0 +1,10 @@
+# Supabase CLI project config. See https://supabase.com/docs/guides/local-development/cli/config
+# This is minimal — it exists so `supabase migration`/`supabase db push` work
+# against the linked project. It does not attempt to model local dev
+# services (Studio, Postgres port, etc.) since this project doesn't yet use
+# `supabase start` for local development.
+
+project_id = "snap-critique"
+
+[db]
+major_version = 15

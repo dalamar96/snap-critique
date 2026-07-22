@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getIsAdmin } from '@/lib/auth/require-admin'
 import { revalidatePath } from 'next/cache'
 
 export async function unlockAnalysis(analysisId: string) {
@@ -14,25 +15,14 @@ export async function unlockAnalysis(analysisId: string) {
 
     const adminDb = createAdminClient()
 
-    // Check credits
-    const { data: profile } = await adminDb.from('profiles').select('credits_balance').eq('id', user.id).single()
+    // Atomically check-and-deduct. Note: `analysisId` here is actually the
+    // submission's id (see `eq('submission_id', analysisId)` below — the
+    // caller in page.tsx passes submission.id under this name).
+    const { data: deducted } = await adminDb.rpc('check_and_decrement_credits', { userid: user.id, count: 1 })
 
-    if (!profile || (profile.credits_balance || 0) < 1) {
+    if (deducted !== true) {
         return { error: 'Insufficient credits' }
     }
-
-    // Deduct Credit
-    const { error: rpcError } = await adminDb.rpc('decrement_credits', { userid: user.id, count: 1 })
-
-    // Fallback if RPC fails (best effort deduction)
-    if (rpcError) {
-        await adminDb.from('profiles').update({ credits_balance: (profile.credits_balance || 1) - 1 }).eq('id', user.id)
-    }
-
-    // Unlock
-    // We need to fetch submission ID? Or is analysisId actually submission Id?
-    // In `CritiqueDisplay`, `analysisId` passed is actually the `submission.id` (based on `page.tsx` code).
-    // `eq('submission_id', id)` in page.tsx.
 
     const { error: updateError } = await adminDb
         .from('analyses')
@@ -40,6 +30,9 @@ export async function unlockAnalysis(analysisId: string) {
         .eq('submission_id', analysisId)
 
     if (updateError) {
+        // Deduction already succeeded but the unlock write failed — refund
+        // rather than leave the user charged with nothing unlocked.
+        await adminDb.rpc('increment_credits', { userid: user.id, count: 1 })
         return { error: 'Update failed' }
     }
 
@@ -65,7 +58,7 @@ export async function deleteSubmission(submissionId: string) {
 
     if (!submission || submission.user_id !== user.id) {
         // Check if admin
-        const isAdmin = (await supabase.from('profiles').select('is_admin').eq('id', user.id).single()).data?.is_admin
+        const isAdmin = await getIsAdmin(createAdminClient(), user.id)
         if (!isAdmin) return { error: 'Unauthorized' }
     }
 
@@ -171,18 +164,16 @@ export async function deleteComment(commentId: string) {
     const { data: comment } = await supabase.from('comments').select('user_id, submission_id').eq('id', commentId).single()
     if (!comment) return { error: 'Not found' }
 
-    // Check Admin Status
-    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
-    const isAdmin = profile?.is_admin
+    // Use Admin Client to delete (bypasses RLS) to ensure Admins can always delete
+    // and to avoid complex RLS policies for "is_admin".
+    const adminDb = createAdminClient()
 
     // Verify Permission
+    const isAdmin = await getIsAdmin(adminDb, user.id)
     if (comment.user_id !== user.id && !isAdmin) {
         return { error: 'Unauthorized' }
     }
 
-    // Use Admin Client to delete (bypasses RLS) to ensure Admins can always delete
-    // and to avoid complex RLS policies for "is_admin".
-    const adminDb = createAdminClient()
     const { error } = await adminDb.from('comments').delete().eq('id', commentId)
 
     if (error) {

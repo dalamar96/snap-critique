@@ -26,30 +26,41 @@ export async function POST(req: NextRequest) {
     let imagePath = '';
     const supabase = createAdminClient();
 
+    // Tracks whether a credit was atomically deducted for this request, so
+    // any failure path below can refund it. Deducting up front (instead of
+    // after Gemini returns) closes a race where two concurrent requests
+    // from a user with 1 credit could both pass a "check" step before
+    // either decremented — see check_and_decrement_credits in
+    // supabase/migrations/20260721000001_credit_fixes.sql.
+    let deductedUserId: string | null = null;
+    const refundCreditIfDeducted = async () => {
+        if (deductedUserId) {
+            await supabase.rpc('increment_credits', { userid: deductedUserId, count: 1 });
+            deductedUserId = null;
+        }
+    };
+
     try {
         const body = await req.json();
         imagePath = body.imagePath;
         const { category, goals, context, lessonId } = body;
 
-        // 0. Auth & Credit Check (Optional)
+        // 0. Auth & atomic Credit Check-and-Deduct (Optional; guests skip)
         const supabaseUser = await createClient();
         const { data: { user } } = await supabaseUser.auth.getUser();
 
         if (user) {
-            // Check credits
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('credits_balance')
-                .eq('id', user.id)
-                .single();
+            const { data: deducted } = await supabase.rpc('check_and_decrement_credits', { userid: user.id, count: 1 });
 
-            if (!profile || (profile.credits_balance || 0) < 1) {
+            if (deducted !== true) {
                 await cleanupFiles(supabase, imagePath);
                 return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 });
             }
+            deductedUserId = user.id;
         }
 
         if (!imagePath) {
+            await refundCreditIfDeducted();
             return NextResponse.json({ error: 'Image path required' }, { status: 400 });
         }
 
@@ -76,6 +87,7 @@ export async function POST(req: NextRequest) {
 
         if (downloadError || !fileData) {
             Logger.error('Download error:', downloadError, { imagePath });
+            await refundCreditIfDeducted();
             await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to download image' }, { status: 500 });
         }
@@ -207,6 +219,7 @@ export async function POST(req: NextRequest) {
             }
         } catch (e) {
             Logger.error("JSON Parse Error", e, { responseText });
+            await refundCreditIfDeducted();
             await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
         }
@@ -235,6 +248,7 @@ export async function POST(req: NextRequest) {
 
         if (submissionError || !submissionData) {
             Logger.error('Submission Insert Error:', submissionError);
+            await refundCreditIfDeducted();
             await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: 'Failed to save submission' }, { status: 500 });
         }
@@ -258,6 +272,7 @@ export async function POST(req: NextRequest) {
 
         if (analysisError) {
             Logger.error('Analysis Insert Error:', analysisError);
+            await refundCreditIfDeducted();
             await supabase.from('submissions').delete().eq('id', submissionId);
             await cleanupFiles(supabase, imagePath);
             return NextResponse.json({ error: `Failed to save analysis` }, { status: 500 });
@@ -283,17 +298,8 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        if (user) {
-            const { error: rpcError } = await supabase.rpc('decrement_credits', { userid: user.id, count: 1 });
-            if (rpcError) {
-                Logger.warn("RPC Failed, falling back to manual update", { rpcError });
-                // Fallback
-                const { data: current } = await supabase.from('profiles').select('credits_balance').eq('id', user.id).single();
-                if (current) {
-                    await supabase.from('profiles').update({ credits_balance: (current.credits_balance || 0) - 1 }).eq('id', user.id);
-                }
-            }
-        }
+        // Credit was already deducted atomically up front (step 0) — nothing
+        // left to do here on success.
 
         const response = NextResponse.json({ success: true, id: submissionId });
 
@@ -310,6 +316,7 @@ export async function POST(req: NextRequest) {
         return response;
     } catch (error) {
         Logger.error('Analysis error:', error, { imagePath });
+        await refundCreditIfDeducted();
         await cleanupFiles(supabase, imagePath);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
