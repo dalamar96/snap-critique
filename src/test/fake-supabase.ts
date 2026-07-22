@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-type QueryResult<T = unknown> = { data: T; error: unknown }
+type QueryResult<T = unknown> = { data: T; error: unknown; count?: number }
 type FakeBuilder = Record<string, (...args: unknown[]) => unknown>
 
 /**
@@ -12,21 +12,25 @@ type FakeBuilder = Record<string, (...args: unknown[]) => unknown>
  */
 export function makeQueryBuilder<T = unknown>(result: QueryResult<T>): FakeBuilder {
     const builder: FakeBuilder = {}
-    const chain = () => builder
+    // Each chain method is its own vi.fn() (not a shared plain function) so
+    // tests can assert on individual calls, e.g.
+    // `expect(builder.update).toHaveBeenCalledWith({...})`.
+    const chain = () => vi.fn(() => builder)
 
-    builder.select = chain
-    builder.insert = chain
-    builder.update = chain
-    builder.delete = chain
-    builder.upsert = chain
-    builder.eq = chain
-    builder.is = chain
-    builder.in = chain
-    builder.order = chain
-    builder.limit = chain
-    builder.single = () => Promise.resolve(result)
-    builder.then = (resolve: unknown, reject?: unknown) =>
+    builder.select = chain()
+    builder.insert = chain()
+    builder.update = chain()
+    builder.delete = chain()
+    builder.upsert = chain()
+    builder.eq = chain()
+    builder.is = chain()
+    builder.in = chain()
+    builder.order = chain()
+    builder.limit = chain()
+    builder.single = vi.fn(() => Promise.resolve(result))
+    builder.then = vi.fn((resolve: unknown, reject?: unknown) =>
         Promise.resolve(result).then(resolve as (v: QueryResult<T>) => unknown, reject as ((r: unknown) => unknown) | undefined)
+    )
 
     return builder
 }
