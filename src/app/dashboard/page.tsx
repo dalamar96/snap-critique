@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Terminal, Clock, CheckCircle, AlertCircle, FileImage, LayoutDashboard, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DashboardPublicToggle } from '@/components/dashboard-public-toggle'
+import { getProgressData } from './progress-data'
+import { ProgressSection } from './progress/progress-section'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -13,19 +15,20 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Parallel fetch: Submissions and Profile
-  const [submissionsRel, profileRel] = await Promise.all([
-      (await supabase)
+  // Parallel fetch: Submissions, Profile, and Progress data
+  const [submissionsRel, profileRel, progressData] = await Promise.all([
+      supabase
         .from('submissions')
         .select('*, analyses(id, title, score, is_public)')
         .eq('user_id', user.id)
         .is('deleted_at', null)
         .order('created_at', { ascending: false }),
-      (await supabase)
+      supabase
         .from('profiles')
         .select('credits_balance')
         .eq('id', user.id)
-        .single()
+        .single(),
+      getProgressData(supabase, user.id)
   ])
 
   const submissions = submissionsRel.data
@@ -93,6 +96,11 @@ export default async function DashboardPage() {
                      </Link>
                 </div>
              </div>
+          </div>
+
+          {/* Progress */}
+          <div className="mb-8 md:mb-12">
+             <ProgressSection data={progressData} />
           </div>
 
           {/* Grid */}
