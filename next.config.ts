@@ -1,14 +1,20 @@
 import type { NextConfig } from "next";
 
 // Content-Security-Policy scoped to what this app actually loads, verified
-// by grepping src/ rather than copy-pasting a generic template:
+// by grepping src/ rather than copy-pasting a generic template — and by
+// actually loading the app in a headless browser and reading
+// `console --errors` (caught two real gaps that grep alone missed: GA4's
+// actual beacon endpoints, and a ProductHunt badge image in footer.tsx):
 // - Google Analytics (@next/third-parties/google, layout.tsx) needs
 //   googletagmanager.com for its script and an inline dataLayer-init
 //   script (hence 'unsafe-inline' on script-src — a nonce-based CSP would
 //   avoid that but needs nonces wired through proxy.ts + the root layout,
-//   a bigger change left as a follow-up).
+//   a bigger change left as a follow-up). Its collect beacons land on
+//   analytics.google.com / stats.g.doubleclick.net / www.google.com, not
+//   just google-analytics.com.
 // - Supabase Storage signed URLs (images) and the browser Supabase client
 //   (auth/rest calls) both hit *.supabase.co.
+// - footer.tsx renders a ProductHunt badge image from api.producthunt.com.
 // - Stripe is NOT loaded client-side: checkout.ts creates a session
 //   server-side and the client just navigates to the returned hosted
 //   checkout URL (confirmed — @stripe/stripe-js is an unused dependency),
@@ -19,9 +25,9 @@ const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.supabase.co",
+  "img-src 'self' data: blob: https://*.supabase.co https://api.producthunt.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com",
+  "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://analytics.google.com https://stats.g.doubleclick.net https://www.google.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
