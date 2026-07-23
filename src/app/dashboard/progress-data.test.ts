@@ -164,6 +164,22 @@ describe('analyzeGearCorrelation', () => {
 
         expect(analyzeGearCorrelation(rows)).toEqual([])
     })
+
+    it('regression: does not throw when an EXIF field is stored as a non-string (e.g. ISO as a raw number)', () => {
+        // Reported production crash: "TypeError: b?.match is not a function".
+        // ExifReader's `.description` isn't guaranteed to be a string for
+        // every tag — observed as a raw number for ISO — but the metadata
+        // jsonb column happily stores whatever shape it was given.
+        const rows = [
+            row({ score: 90, metadata: { iso: 100 as unknown as string } }),
+            row({ score: 85, metadata: { iso: 200 as unknown as string } }),
+            row({ score: 80, metadata: { iso: 300 as unknown as string } }),
+        ]
+
+        expect(() => analyzeGearCorrelation(rows)).not.toThrow()
+        const isoInsight = analyzeGearCorrelation(rows).find((i) => i.dimension === 'iso')
+        expect(isoInsight?.count).toBe(3)
+    })
 })
 
 describe('analyzeGoalAlignment', () => {
@@ -188,6 +204,11 @@ describe('analyzeGoalAlignment', () => {
     it('excludes goals with fewer than 2 data points', () => {
         const rows = [row({ score: 90, goals: ['storytelling'] })]
         expect(analyzeGoalAlignment(rows)).toEqual([])
+    })
+
+    it('does not throw when goals is not actually an array', () => {
+        const rows = [row({ score: 90, goals: 'composition' as unknown as string[] })]
+        expect(() => analyzeGoalAlignment(rows)).not.toThrow()
     })
 })
 
@@ -251,6 +272,14 @@ describe('extractRecurringThemes', () => {
     it('respects the minimum-occurrences threshold', () => {
         const rows = [row({ strengths: ['Beautiful lighting'] })]
         expect(extractRecurringThemes(rows, 2)).toEqual([])
+    })
+
+    it('does not throw on malformed full_critique shapes (non-array improvements/strengths, non-string titles)', () => {
+        const rows = [
+            row({ improvements: 'not an array' as unknown as { title?: string }[], strengths: null }),
+            row({ improvements: [{ title: 123 as unknown as string }], strengths: [456 as unknown as string] }),
+        ]
+        expect(() => extractRecurringThemes(rows)).not.toThrow()
     })
 })
 

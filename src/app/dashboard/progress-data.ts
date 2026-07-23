@@ -10,7 +10,7 @@ export interface ProgressRow {
     createdAt: string
     category: string | null
     goals: string[] | null
-    metadata: Record<string, string> | null
+    metadata: Record<string, unknown> | null
     score: number | null
     scores: { composition?: number; technique?: number; creativity?: number } | null
     goalScore: number | null
@@ -183,21 +183,32 @@ export function findPersonalBests(rows: ProgressRow[]): PersonalBests {
 
 // --- Gear/settings correlation -------------------------------------------
 
-function parseAperture(raw: string | undefined): number | null {
-    const match = raw?.match(/f\/?\s*([\d.]+)/i)
+// EXIF values come from ExifReader's `.description` field via api/analyze/route.ts
+// and are stored in submissions.metadata as-is. The TS type says `string`,
+// but that's only a compile-time assertion — in practice ExifReader returns
+// some tags (observed: ISO) as a raw number rather than a string, so this
+// coerces defensively rather than trusting the declared type.
+function asString(raw: unknown): string | null {
+    if (raw === null || raw === undefined) return null
+    return typeof raw === 'string' ? raw : String(raw)
+}
+
+function parseAperture(raw: unknown): number | null {
+    const match = asString(raw)?.match(/f\/?\s*([\d.]+)/i)
     return match ? parseFloat(match[1]) : null
 }
 
-function parseIso(raw: string | undefined): number | null {
-    const match = raw?.match(/(\d+)/)
+function parseIso(raw: unknown): number | null {
+    const match = asString(raw)?.match(/(\d+)/)
     return match ? parseInt(match[1], 10) : null
 }
 
-function parseShutterSpeed(raw: string | undefined): number | null {
-    if (!raw) return null
-    const fraction = raw.match(/1\s*\/\s*(\d+)/)
+function parseShutterSpeed(raw: unknown): number | null {
+    const str = asString(raw)
+    if (!str) return null
+    const fraction = str.match(/1\s*\/\s*(\d+)/)
     if (fraction) return 1 / parseInt(fraction[1], 10)
-    const seconds = raw.match(/([\d.]+)\s*s/i)
+    const seconds = str.match(/([\d.]+)\s*s/i)
     if (seconds) return parseFloat(seconds[1])
     return null
 }
@@ -225,7 +236,7 @@ const SHUTTER_BUCKETS: Bucket[] = [
 function bucketAndScore(
     rows: ProgressRow[],
     dimension: GearInsight['dimension'],
-    extract: (metadata: Record<string, string>) => number | null,
+    extract: (metadata: Record<string, unknown>) => number | null,
     buckets: Bucket[]
 ): GearInsight[] {
     const byBucket = new Map<string, number[]>()
@@ -265,7 +276,7 @@ export function analyzeGoalAlignment(rows: ProgressRow[]): GoalInsight[] {
 
     const byGoal = new Map<string, number[]>()
     for (const r of scored) {
-        for (const goal of r.goals ?? []) {
+        for (const goal of Array.isArray(r.goals) ? r.goals : []) {
             const arr = byGoal.get(goal) ?? []
             arr.push(r.score)
             byGoal.set(goal, arr)
@@ -328,8 +339,18 @@ export function extractRecurringThemes(rows: ProgressRow[], minOccurrences = THE
 
     for (const r of rows) {
         const seenInThisRow = new Set<string>()
-        const texts = [...(r.improvements ?? []).map((i) => i.title ?? ''), ...(r.strengths ?? [])]
+        // full_critique is Gemini's JSON output — shape isn't guaranteed at
+        // runtime the way an app-controlled column would be, so this
+        // doesn't trust improvements/strengths to actually be arrays of the
+        // expected element shape (same class of bug as the EXIF parsing
+        // below: a declared TS type is not a runtime guarantee for jsonb).
+        const improvementTitles = Array.isArray(r.improvements)
+            ? r.improvements.map((i) => (typeof i?.title === 'string' ? i.title : ''))
+            : []
+        const strengthTexts = Array.isArray(r.strengths) ? r.strengths.filter((s): s is string => typeof s === 'string') : []
+        const texts = [...improvementTitles, ...strengthTexts]
         for (const text of texts) {
+            if (!text) continue
             const words = text
                 .toLowerCase()
                 .replace(/[^a-z0-9\s]/g, ' ')
@@ -372,7 +393,7 @@ interface SubmissionJoinRow {
     created_at: string
     category: string | null
     goals: string[] | null
-    metadata: Record<string, string> | null
+    metadata: Record<string, unknown> | null
     analyses: { score: number | null; full_critique: Record<string, unknown> | null; goal_score: number | null }[] | { score: number | null; full_critique: Record<string, unknown> | null; goal_score: number | null } | null
 }
 
