@@ -1,6 +1,7 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { Logger } from '@/lib/logger'
 
 /**
  * Plain boolean admin lookup, no throw. Use where the caller wants to
@@ -41,4 +42,37 @@ export async function requireAdmin(): Promise<{ user: User; adminDb: SupabaseCli
     }
 
     return { user, adminDb }
+}
+
+/**
+ * Records a destructive/mutating admin action to admin_audit_log
+ * (supabase/migrations/20260722000000_hardening.sql). Best-effort: logs a
+ * warning and continues rather than failing the calling action if the
+ * write itself fails (e.g. the migration hasn't been applied yet) — an
+ * admin action shouldn't be blocked by audit-log infrastructure being
+ * unavailable.
+ */
+export async function logAdminAction(
+    adminDb: SupabaseClient,
+    adminId: string,
+    action: string,
+    opts?: { targetTable?: string; targetId?: string; details?: Record<string, unknown> }
+): Promise<void> {
+    try {
+        const { error } = await adminDb.from('admin_audit_log').insert({
+            admin_id: adminId,
+            action,
+            target_table: opts?.targetTable ?? null,
+            target_id: opts?.targetId ?? null,
+            details: opts?.details ?? null,
+        })
+
+        if (error) {
+            Logger.warn('[AdminAudit] Failed to write audit log entry', { error: error.message, action })
+        }
+    } catch (e) {
+        // Never let audit logging itself take down the admin action it's
+        // recording — this is a best-effort side effect, not a gate.
+        Logger.warn('[AdminAudit] Unexpected error writing audit log entry', { error: String(e), action })
+    }
 }

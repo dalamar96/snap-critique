@@ -38,6 +38,22 @@ export async function POST(req: Request) {
         const session = event.data.object as any;
         const metadata = session.metadata || {};
 
+        // Idempotency guard: Stripe can and does redeliver webhook events
+        // (timeouts, retries). Both branches below insert a `transactions`
+        // row keyed by session.id, so if one already exists for this
+        // session, this event has already been processed — skip re-crediting
+        // / re-unlocking rather than double-applying it.
+        const { data: existingTransaction } = await supabase
+            .from('transactions')
+            .select('id')
+            .eq('stripe_session_id', session.id)
+            .maybeSingle();
+
+        if (existingTransaction) {
+            console.log(`[Webhook] Session ${session.id} already processed, skipping`);
+            return NextResponse.json({ received: true });
+        }
+
         if (metadata.userId && metadata.creditAmount) {
             const userId = metadata.userId;
             const creditsToAdd = parseInt(metadata.creditAmount);

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { ProfileForm } from './profile-form'
+import { DangerZone } from './danger-zone'
 
 export default async function ProfileEditPage() {
   const supabase = await createClient()
@@ -37,13 +38,15 @@ export default async function ProfileEditPage() {
       <div className="max-w-2xl mx-auto">
          <h1 className="text-3xl font-bold text-white uppercase mb-8 pb-4 border-b border-white/10">Edit Profile</h1>
          
-         <ProfileForm 
-            user={user} 
-            profile={profile} 
+         <ProfileForm
+            user={user}
+            profile={profile}
             initialAvatarUrl={signedAvatarUrl}
-            availableBrands={brands} 
-            availableTypes={types} 
+            availableBrands={brands}
+            availableTypes={types}
          />
+
+         <DangerZone />
       </div>
     </div>
   )

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { model } from '@/lib/gemini';
 import ExifReader from 'exifreader';
 import { Logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Helper to clean up orphaned files
 async function cleanupFiles(supabase: any, imagePath: string) {
@@ -48,6 +49,16 @@ export async function POST(req: NextRequest) {
         // 0. Auth & atomic Credit Check-and-Deduct (Optional; guests skip)
         const supabaseUser = await createClient();
         const { data: { user } } = await supabaseUser.auth.getUser();
+
+        // Rate limit before spending any credit or calling Gemini. Keyed by
+        // user id when logged in, otherwise by IP (guests share no other
+        // stable identifier here).
+        const rateLimitKey = user ? `analyze:${user.id}` : `analyze:${req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'}`;
+        const withinRateLimit = await checkRateLimit(supabase, rateLimitKey, 5, 60);
+        if (!withinRateLimit) {
+            await cleanupFiles(supabase, imagePath);
+            return NextResponse.json({ error: 'Too many requests. Please wait a moment and try again.' }, { status: 429 });
+        }
 
         if (user) {
             const { data: deducted } = await supabase.rpc('check_and_decrement_credits', { userid: user.id, count: 1 });

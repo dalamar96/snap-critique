@@ -27,6 +27,7 @@ vi.mock('next/cache', () => ({
 }))
 vi.mock('next/headers', () => ({
     cookies: vi.fn(async () => mockCookies),
+    headers: vi.fn(async () => ({ get: () => null })),
 }))
 vi.mock('next/navigation', () => ({
     redirect: vi.fn((url: string) => {
@@ -48,6 +49,24 @@ describe('login', () => {
         mockCookies.get.mockReset().mockReturnValue(undefined)
         const base = makeFakeSupabase()
         Object.assign(mockAdminClient, base)
+        // Rate limiting is allowed by default so existing behavior tests
+        // aren't incidentally blocked; other RPCs (e.g. the credit check
+        // inside claimGuestSubmission) default to "no credits", matching
+        // this suite's prior behavior before rate limiting was added.
+        mockAdminClient.rpc = vi.fn(async (fn: string) =>
+            fn === 'check_rate_limit' ? { data: true, error: null } : { data: null, error: null }
+        )
+    })
+
+    it('redirects with a rate-limit error once too many attempts have been made', async () => {
+        mockAdminClient.rpc = vi.fn(async (fn: string) =>
+            fn === 'check_rate_limit' ? { data: false, error: null } : { data: null, error: null }
+        )
+
+        await expect(login(formData({ email: 'a@b.com', password: 'x' }))).rejects.toThrow(
+            /REDIRECT:\/login\?error=Too many attempts/
+        )
+        expect(mockUserClient.auth.signInWithPassword).not.toHaveBeenCalled()
     })
 
     it('redirects with an error message on invalid credentials', async () => {
@@ -95,7 +114,7 @@ describe('login', () => {
             calledTables.push(table)
             return makeQueryBuilder({ data: null, error: null })
         })
-        mockAdminClient.rpc = vi.fn(async () => ({ data: null, error: null }))
+        // (rpc stays at the beforeEach default: check_rate_limit allowed, everything else "no credits")
 
         await expect(
             login(formData({ email: 'a@b.com', password: 'x', next: '/analysis/victim-sub-id' }))
@@ -116,7 +135,7 @@ describe('login', () => {
             if (table === 'submissions') return makeQueryBuilder({ data: [{ id: 'sub-1' }], error: null })
             return makeQueryBuilder({ data: null, error: null })
         })
-        mockAdminClient.rpc = vi.fn(async () => ({ data: null, error: null })) // no credits, still claims
+        // (rpc stays at the beforeEach default: check_rate_limit allowed, credit check "no credits" — still claims)
 
         await expect(
             login(formData({ email: 'a@b.com', password: 'x', next: '/analysis/sub-1' }))
@@ -130,6 +149,20 @@ describe('signup', () => {
         mockCookies.get.mockReset().mockReturnValue(undefined)
         const base = makeFakeSupabase()
         Object.assign(mockAdminClient, base)
+        mockAdminClient.rpc = vi.fn(async (fn: string) =>
+            fn === 'check_rate_limit' ? { data: true, error: null } : { data: null, error: null }
+        )
+    })
+
+    it('redirects with a rate-limit error once too many signup attempts have been made', async () => {
+        mockAdminClient.rpc = vi.fn(async (fn: string) =>
+            fn === 'check_rate_limit' ? { data: false, error: null } : { data: null, error: null }
+        )
+
+        await expect(signup(formData({ email: 'a@b.com', password: 'x' }))).rejects.toThrow(
+            /REDIRECT:\/login\?error=Too many signup attempts/
+        )
+        expect(mockUserClient.auth.signUp).not.toHaveBeenCalled()
     })
 
     it('redirects to /login with the auth error message on signup failure', async () => {

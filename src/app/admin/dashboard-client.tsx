@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { StorageCleanupModal } from './storage-manager'
-import { Sidebar, Activity, Users, Database, Globe, Search, Lock, List, ArrowRight, AlertTriangle, HardDrive } from 'lucide-react'
+import { Sidebar, Activity, Users, Database, Globe, Search, Lock, List, ArrowRight, AlertTriangle, HardDrive, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { UserTable } from './user-table'
 import { UnclaimedTable } from './unclaimed-table'
 import { AllAnalysesTable } from './all-analyses-table'
 import { ErrorLogTable } from './error-log-table'
 import { SupportInbox } from './support-inbox'
+import { AuditLogTable } from './audit-log-table'
 
 interface DashboardData {
     users: any[]
@@ -33,6 +34,7 @@ export function DashboardClient({
     const [showErrors, setShowErrors] = useState(false)
     const [showMessages, setShowMessages] = useState(false)
     const [showStorage, setShowStorage] = useState(false)
+    const [showAuditLog, setShowAuditLog] = useState(false)
 
     // Derived metrics
     const totalUsers = data.userCount
@@ -145,6 +147,17 @@ export function DashboardClient({
                         </div>
                         <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
                     </Link>
+
+                    <div onClick={() => setShowAuditLog(true)} className="cursor-pointer bg-black border border-white/10 p-6 rounded-lg hover:border-primary transition-colors flex items-center justify-between group">
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-primary" />
+                            <div>
+                                <h3 className="text-lg font-bold text-white uppercase mb-1">Audit Log</h3>
+                                <p className="text-slate-500 text-xs">Who did what, and when</p>
+                            </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
+                    </div>
                   </div>
               </div>
     
@@ -164,6 +177,7 @@ export function DashboardClient({
            <StorageCleanupModal isOpen={showStorage} onClose={() => setShowStorage(false)} />
            {showErrors && <ErrorLogTable onClose={() => setShowErrors(false)} />}
            {showMessages && <SupportInbox onClose={() => setShowMessages(false)} />}
+           {showAuditLog && <AuditLogTable onClose={() => setShowAuditLog(false)} />}
         </div>
     )
 }

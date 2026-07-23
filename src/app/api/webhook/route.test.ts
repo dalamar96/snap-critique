@@ -111,4 +111,20 @@ describe('POST /api/webhook', () => {
         expect(res.status).toBe(200)
         expect(calledTables).toHaveLength(0)
     })
+
+    it('is idempotent: a redelivered event for an already-processed session does not credit twice', async () => {
+        mockConstructEvent.mockReturnValueOnce(
+            checkoutSessionEvent({ metadata: { userId: 'user-1', creditAmount: '20' } })
+        )
+        mockAdminClient.from = vi.fn((table: string) => {
+            calledTables.push(table)
+            if (table === 'transactions') return makeQueryBuilder({ data: { id: 'existing-tx' }, error: null })
+            return makeQueryBuilder({ data: null, error: null })
+        })
+
+        const res = await POST(fakeRequest({}))
+
+        expect(res.status).toBe(200)
+        expect(mockAdminClient.rpc).not.toHaveBeenCalled()
+    })
 })

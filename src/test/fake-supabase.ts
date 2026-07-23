@@ -28,6 +28,7 @@ export function makeQueryBuilder<T = unknown>(result: QueryResult<T>): FakeBuild
     builder.order = chain()
     builder.limit = chain()
     builder.single = vi.fn(() => Promise.resolve(result))
+    builder.maybeSingle = vi.fn(() => Promise.resolve(result))
     builder.then = vi.fn((resolve: unknown, reject?: unknown) =>
         Promise.resolve(result).then(resolve as (v: QueryResult<T>) => unknown, reject as ((r: unknown) => unknown) | undefined)
     )

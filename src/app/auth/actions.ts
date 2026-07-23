@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { claimGuestSubmission } from '@/lib/claim-guest-submission'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 // Given a `next` redirect target, returns the submission ID if it points at
 // an analysis page, otherwise null. Shared by login() and signup() so both
@@ -19,6 +20,12 @@ function extractSubmissionIdFromNext(next: string | undefined): string | null {
 export async function login(formData: FormData) {
     const supabase = await createClient()
     const adminSupabase = createAdminClient()
+
+    const ip = await getClientIp()
+    const allowed = await checkRateLimit(adminSupabase, `login:${ip}`, 10, 60)
+    if (!allowed) {
+        redirect('/login?error=Too many attempts. Please wait a minute and try again.')
+    }
 
     const email = formData.get('email') as string
     const password = formData.get('password') as string
@@ -69,6 +76,12 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
     const supabase = await createClient()
     const adminSupabase = createAdminClient()
+
+    const ip = await getClientIp()
+    const allowed = await checkRateLimit(adminSupabase, `signup:${ip}`, 5, 60)
+    if (!allowed) {
+        redirect('/login?error=Too many signup attempts. Please wait a minute and try again.')
+    }
 
     const email = formData.get('email') as string
     const password = formData.get('password') as string

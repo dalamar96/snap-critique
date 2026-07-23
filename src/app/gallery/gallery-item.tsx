@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { isNsfwFlagged } from '@/lib/nsfw'
 
 interface GalleryItemProps {
     item: {
@@ -19,8 +20,7 @@ interface GalleryItemProps {
 
 export function GalleryItem({ item }: GalleryItemProps) {
     // Determine initial blur state based on NSFW score
-    // If nsfw_score > 75, it's considered potential NSFW
-    const isPotentiallyNSFW = (item.nsfw_score || 0) > 75
+    const isPotentiallyNSFW = isNsfwFlagged(item.nsfw_score)
     const [isRevealed, setIsRevealed] = useState(!isPotentiallyNSFW)
 
     return (

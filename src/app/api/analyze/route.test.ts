@@ -47,10 +47,24 @@ describe('POST /api/analyze — credit gate', () => {
         Object.assign(mockAdminClient, base)
     })
 
+    it('returns 429 and never calls Gemini or the credit RPC when rate-limited', async () => {
+        mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } })
+        const rpc = vi.fn(async (fn: string) =>
+            fn === 'check_rate_limit' ? { data: false, error: null } : { data: null, error: null }
+        )
+        mockAdminClient.rpc = rpc
+
+        const res = await POST(fakeRequest({ imagePath: 'uploads/test.jpg' }))
+
+        expect(res.status).toBe(429)
+        expect(mockGenerateContent).not.toHaveBeenCalled()
+        expect(rpc).not.toHaveBeenCalledWith('check_and_decrement_credits', expect.anything())
+    })
+
     it('returns 402 and never calls Gemini when the atomic credit deduction fails', async () => {
         mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } })
         mockAdminClient.rpc = vi.fn(async (fn: string) =>
-            fn === 'check_and_decrement_credits' ? { data: null, error: null } : { data: null, error: null }
+            fn === 'check_rate_limit' ? { data: true, error: null } : { data: null, error: null }
         )
 
         const res = await POST(fakeRequest({ imagePath: 'uploads/test.jpg' }))
@@ -63,7 +77,7 @@ describe('POST /api/analyze — credit gate', () => {
         mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } })
 
         const rpc = vi.fn(async (fn: string) =>
-            fn === 'check_and_decrement_credits' ? { data: true, error: null } : { data: null, error: null }
+            fn === 'check_and_decrement_credits' || fn === 'check_rate_limit' ? { data: true, error: null } : { data: null, error: null }
         )
         mockAdminClient.rpc = rpc
 
@@ -88,7 +102,9 @@ describe('POST /api/analyze — credit gate', () => {
     it('does not deduct or refund anything for guest (unauthenticated) requests', async () => {
         mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: null } })
 
-        const rpc = vi.fn(async () => ({ data: null, error: null }))
+        const rpc = vi.fn(async (fn: string) =>
+            fn === 'check_rate_limit' ? { data: true, error: null } : { data: null, error: null }
+        )
         mockAdminClient.rpc = rpc
 
         mockAdminClient.storage = {
@@ -103,6 +119,7 @@ describe('POST /api/analyze — credit gate', () => {
 
         await POST(fakeRequest({ imagePath: 'uploads/test.jpg' }))
 
-        expect(rpc).not.toHaveBeenCalled()
+        expect(rpc).not.toHaveBeenCalledWith('check_and_decrement_credits', expect.anything())
+        expect(rpc).not.toHaveBeenCalledWith('increment_credits', expect.anything())
     })
 })

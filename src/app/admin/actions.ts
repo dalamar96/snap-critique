@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { requireAdmin, logAdminAction } from '@/lib/auth/require-admin'
 import { revalidatePath } from 'next/cache'
 import fs from 'fs'
 import path from 'path'
@@ -227,7 +227,7 @@ export async function getAllSubmissions() {
 
 
 export async function restoreSubmission(submissionId: string) {
-    const { adminDb } = await requireAdmin()
+    const { user, adminDb } = await requireAdmin()
 
     const { error } = await adminDb
         .from('submissions')
@@ -235,11 +235,12 @@ export async function restoreSubmission(submissionId: string) {
         .eq('id', submissionId)
 
     if (error) throw new Error(error.message)
+    await logAdminAction(adminDb, user.id, 'restore_submission', { targetTable: 'submissions', targetId: submissionId })
     revalidatePath('/admin')
 }
 
 export async function hardDeleteSubmission(submissionId: string) {
-    const { adminDb } = await requireAdmin()
+    const { user, adminDb } = await requireAdmin()
 
     // 1. Get File Paths
     const { data: submission } = await adminDb
@@ -285,6 +286,7 @@ export async function hardDeleteSubmission(submissionId: string) {
         .eq('id', submissionId)
 
     if (error) throw new Error(error.message)
+    await logAdminAction(adminDb, user.id, 'hard_delete_submission', { targetTable: 'submissions', targetId: submissionId })
     revalidatePath('/admin')
 }
 
@@ -346,6 +348,12 @@ export async function updateUserCredits(userId: string, amount: number) {
         stripe_session_id: `admin_${user.id}_${Date.now()}` // Pseudo-ID for tracking
     })
 
+    await logAdminAction(adminDb, user.id, 'update_user_credits', {
+        targetTable: 'profiles',
+        targetId: userId,
+        details: { amount, newBalance },
+    })
+
     revalidatePath('/admin')
 }
 
@@ -389,10 +397,44 @@ export async function getErrorLogs(limit = 100) {
     }))
 }
 
-export async function deleteErrorLog(logId: string) {
+export async function getAdminAuditLog(limit = 100) {
     const { adminDb } = await requireAdmin()
 
+    const { data: logs, error } = await adminDb
+        .from('admin_audit_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+    if (error) {
+        console.error('Failed to fetch admin audit log', error)
+        return []
+    }
+
+    if (!logs || logs.length === 0) return []
+
+    // Manual join for admin emails (same pattern as getErrorLogs)
+    const adminIds = Array.from(new Set(logs.map((l) => l.admin_id).filter(Boolean)))
+    const adminsMap: Record<string, string> = {}
+
+    if (adminIds.length > 0) {
+        const { data: admins } = await adminDb.from('profiles').select('id, email').in('id', adminIds)
+        admins?.forEach((a) => {
+            adminsMap[a.id] = a.email
+        })
+    }
+
+    return logs.map((log) => ({
+        ...log,
+        admin_email: adminsMap[log.admin_id] || log.admin_id,
+    }))
+}
+
+export async function deleteErrorLog(logId: string) {
+    const { user, adminDb } = await requireAdmin()
+
     await adminDb.from('error_logs').delete().eq('id', logId)
+    await logAdminAction(adminDb, user.id, 'delete_error_log', { targetTable: 'error_logs', targetId: logId })
     revalidatePath('/admin')
 }
 
@@ -503,11 +545,12 @@ export async function adminResolveConversation(targetUserId: string, status: 'op
 }
 
 export async function adminDeleteConversation(targetUserId: string) {
-    const { adminDb } = await requireAdmin()
+    const { user, adminDb } = await requireAdmin()
 
     await adminDb.from('messages').delete().eq('user_id', targetUserId)
     await adminDb.from('conversation_status').delete().eq('user_id', targetUserId)
 
+    await logAdminAction(adminDb, user.id, 'delete_conversation', { targetTable: 'messages', targetId: targetUserId })
     revalidatePath('/admin')
 }
 
@@ -528,7 +571,7 @@ export async function getAdminLessons() {
 }
 
 export async function upsertLesson(lesson: Partial<LessonNode>) {
-    const { adminDb } = await requireAdmin()
+    const { user, adminDb } = await requireAdmin()
 
     // Clean payload
     const payload: any = { ...lesson }
@@ -540,15 +583,17 @@ export async function upsertLesson(lesson: Partial<LessonNode>) {
         .upsert(payload)
 
     if (error) throw new Error(error.message)
+    await logAdminAction(adminDb, user.id, 'upsert_lesson', { targetTable: 'lessons', targetId: lesson.id })
     revalidatePath('/learning')
     revalidatePath('/admin')
 }
 
 export async function deleteLesson(id: string) {
-    const { adminDb } = await requireAdmin()
+    const { user, adminDb } = await requireAdmin()
 
     const { error } = await adminDb.from('lessons').delete().eq('id', id)
     if (error) throw new Error(error.message)
+    await logAdminAction(adminDb, user.id, 'delete_lesson', { targetTable: 'lessons', targetId: id })
     revalidatePath('/learning')
     revalidatePath('/admin')
 }

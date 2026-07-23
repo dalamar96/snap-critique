@@ -78,12 +78,11 @@ alter table public.profiles enable row level security;
 create policy "Users can view own profile" on public.profiles
   for select using (auth.uid() = id);
 
--- UNVERIFIED: public profiles must be readable by anyone for /community and
--- /profile/[id] to work; no committed policy exists for this. Likely handled
--- via createAdminClient() (service role) in server actions/pages instead of
--- a public SELECT policy. Verify and add an explicit policy if needed:
--- create policy "Public profiles are viewable by everyone" on public.profiles
---   for select using (is_public = true);
+-- Added in supabase/migrations/20260722000000_hardening.sql. Defense-in-depth
+-- only — /community and /profile/[id] currently read via createAdminClient()
+-- (service role, bypasses RLS) rather than depending on this policy.
+create policy "Public profiles are viewable by everyone" on public.profiles
+  for select using (is_public = true);
 
 
 -- ============================================================================
@@ -146,15 +145,22 @@ create table public.analyses (
 
 alter table public.analyses enable row level security;
 
--- UNVERIFIED: no committed policies for analyses beyond RLS being enabled.
--- The app appears to rely heavily on createAdminClient() (service role) in
--- server actions/pages for analyses reads/writes, bypassing RLS. If any
--- client-side reads happen directly, matching SELECT policies are needed,
--- e.g.:
--- create policy "Public analyses are viewable by everyone" on public.analyses
---   for select using (is_public = true);
--- create policy "Owners can view own analyses" on public.analyses
---   for select using (auth.uid() = user_id);
+-- Added in supabase/migrations/20260722000000_hardening.sql. Defense-in-depth
+-- only — the app reads/writes analyses via createAdminClient() (service
+-- role, bypasses RLS) almost everywhere. analyses has no user_id column
+-- (confirmed), so "owner" access is checked via a join back through
+-- submissions rather than a direct column comparison.
+create policy "Public analyses are viewable by everyone" on public.analyses
+  for select using (is_public = true);
+
+create policy "Owners can view own analyses" on public.analyses
+  for select using (
+    exists (
+      select 1 from public.submissions
+      where submissions.id = analyses.submission_id
+        and submissions.user_id = auth.uid()
+    )
+  );
 
 -- full_critique jsonb shape (informational, not enforced by Postgres):
 -- {
@@ -412,8 +418,10 @@ create table public.error_logs (
 -- wired up to the app; the app currently uses `profiles` for all
 -- profile-related functionality instead. submissions.photographer_profile_id
 -- and analyses.photographer_profile_id both point here and are similarly
--- unused. Flagging for awareness, not touching — out of scope of the
--- guest-claim/credit-flow stabilization this file was last updated for.
+-- unused. An OPTIONAL migration (20260722000001_drop_photographer_profiles.sql)
+-- drops it — not applied here/reflected in this snapshot since it needs a
+-- manual "is anything external actually using this" check first (see that
+-- migration's header). This snapshot still includes the table below.
 -- ============================================================================
 
 create table public.photographer_profiles (
@@ -476,6 +484,70 @@ create table public.conversation_status (
 
 -- RLS not enabled: this table is accessed exclusively via createAdminClient()
 -- (service role) in server actions.
+
+
+-- ============================================================================
+-- TABLE + RPC: rate_limits / check_rate_limit
+-- Added in supabase/migrations/20260722000000_hardening.sql. Postgres-backed
+-- rate limiting (chosen over an external service so it ships without a new
+-- account/credentials). See src/lib/rate-limit.ts for the app-side wrapper.
+-- ============================================================================
+
+create table public.rate_limits (
+  key text primary key,          -- e.g. 'login:203.0.113.5' or 'analyze:user-uuid'
+  count int not null default 1,
+  window_start timestamptz not null default now()
+);
+
+create or replace function public.check_rate_limit(p_key text, p_limit int, p_window_seconds int)
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+  v_count int;
+begin
+  insert into public.rate_limits (key, count, window_start)
+  values (p_key, 1, now())
+  on conflict (key) do update
+    set
+      count = case
+        when public.rate_limits.window_start < now() - (p_window_seconds || ' seconds')::interval
+          then 1
+        else public.rate_limits.count + 1
+      end,
+      window_start = case
+        when public.rate_limits.window_start < now() - (p_window_seconds || ' seconds')::interval
+          then now()
+        else public.rate_limits.window_start
+      end
+  returning count into v_count;
+
+  return v_count <= p_limit;
+end;
+$$;
+
+
+-- ============================================================================
+-- TABLE: admin_audit_log
+-- Added in supabase/migrations/20260722000000_hardening.sql. Attributes
+-- destructive/mutating admin actions to the admin who performed them.
+-- ============================================================================
+
+create table public.admin_audit_log (
+  id uuid default gen_random_uuid() primary key,
+  admin_id uuid not null references public.profiles(id),
+  action text not null,
+  target_table text,
+  target_id text,
+  details jsonb,
+  created_at timestamptz default now() not null
+);
+
+create index idx_admin_audit_log_created_at on public.admin_audit_log(created_at desc);
+
+alter table public.admin_audit_log enable row level security;
+-- No client policies — written and read exclusively via createAdminClient().
 
 
 -- ============================================================================

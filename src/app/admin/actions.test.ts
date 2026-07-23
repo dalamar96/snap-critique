@@ -7,6 +7,10 @@ const { mockUserClient, mockAdminClient } = vi.hoisted(() => {
     return { mockUserClient, mockAdminClient }
 })
 
+function defaultQueryBuilder() {
+    return makeQueryBuilder({ data: null, error: null })
+}
+
 vi.mock('@/lib/supabase/server', () => ({
     createClient: vi.fn(async () => mockUserClient),
 }))
@@ -35,7 +39,10 @@ function mockAsNonAdmin() {
 
 beforeEach(() => {
     mockUserClient.auth.getUser.mockReset()
-    mockAdminClient.from.mockReset()
+    // Persistent default so calls beyond what a test explicitly queues
+    // (e.g. the admin_audit_log insert every mutating action now makes)
+    // resolve to a harmless empty result instead of undefined.
+    mockAdminClient.from.mockReset().mockImplementation(defaultQueryBuilder)
     mockAdminClient.storage.from.mockReset()
 })
 
@@ -104,15 +111,22 @@ describe('restoreSubmission', () => {
         await expect(restoreSubmission('sub-1')).rejects.toThrow('Forbidden')
     })
 
-    it('clears deleted_at for an admin', async () => {
+    it('clears deleted_at for an admin, and records the action in the audit log', async () => {
         mockAsAdmin()
         const updateBuilder = makeQueryBuilder({ data: null, error: null })
+        const auditLogBuilder = makeQueryBuilder({ data: null, error: null })
         mockAdminClient.from.mockImplementationOnce(() => updateBuilder)
+        mockAdminClient.from.mockImplementationOnce((table: string) =>
+            table === 'admin_audit_log' ? auditLogBuilder : defaultQueryBuilder()
+        )
 
         await restoreSubmission('sub-1')
 
         expect(updateBuilder.update).toHaveBeenCalledWith({ deleted_at: null })
         expect(updateBuilder.eq).toHaveBeenCalledWith('id', 'sub-1')
+        expect(auditLogBuilder.insert).toHaveBeenCalledWith(
+            expect.objectContaining({ admin_id: 'admin-1', action: 'restore_submission', target_id: 'sub-1' })
+        )
     })
 
     it('throws the DB error message when the update fails', async () => {

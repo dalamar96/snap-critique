@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getIsAdmin } from '@/lib/auth/require-admin'
+import { isNsfwFlagged } from '@/lib/nsfw'
 import { revalidatePath } from 'next/cache'
 
 export async function unlockAnalysis(analysisId: string) {
@@ -103,6 +104,23 @@ export async function togglePublicStatus(submissionId: string, isPublic: boolean
     }
 
     const adminDb = createAdminClient()
+
+    // Server-side NSFW gate: the gallery's blur is cosmetic (client-side
+    // only), so without this check a user could toggle a flagged analysis
+    // public and it would be fully visible via direct link regardless.
+    if (isPublic) {
+        const { data: analysis } = await adminDb
+            .from('analyses')
+            .select('full_critique')
+            .eq('submission_id', submissionId)
+            .single()
+
+        const nsfwScore = (analysis?.full_critique as { nsfw_score?: number } | null)?.nsfw_score
+        if (isNsfwFlagged(nsfwScore)) {
+            return { error: 'This analysis cannot be made public — it was flagged as potentially sensitive content.' }
+        }
+    }
+
     const { error } = await adminDb
         .from('analyses')
         .update({ is_public: isPublic })

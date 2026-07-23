@@ -165,6 +165,35 @@ describe('togglePublicStatus', () => {
         expect(await togglePublicStatus('sub-1', true)).toEqual({ success: true })
         expect(mockAdminClient.from).toHaveBeenCalledWith('analyses')
     })
+
+    it('refuses to make an NSFW-flagged analysis public, even though the client-side gallery blur is bypassable', async () => {
+        mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } })
+        mockUserClient.from.mockImplementation(() => makeQueryBuilder({ data: { user_id: 'user-1' }, error: null }))
+        mockAdminClient.from.mockImplementation((table: string) => {
+            if (table === 'analyses') return makeQueryBuilder({ data: { full_critique: { nsfw_score: 90 } }, error: null })
+            return makeQueryBuilder({ data: null, error: null })
+        })
+
+        const result = await togglePublicStatus('sub-1', true)
+
+        expect(result.error).toMatch(/flagged/i)
+    })
+
+    it('does not run the NSFW check when making an analysis private', async () => {
+        mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } })
+        mockUserClient.from.mockImplementation(() => makeQueryBuilder({ data: { user_id: 'user-1' }, error: null }))
+        const analysesBuilder = makeQueryBuilder({ data: null, error: null })
+        mockAdminClient.from.mockImplementation((table: string) => {
+            if (table === 'analyses') return analysesBuilder
+            return makeQueryBuilder({ data: null, error: null })
+        })
+
+        const result = await togglePublicStatus('sub-1', false)
+
+        expect(result).toEqual({ success: true })
+        expect(analysesBuilder.select).not.toHaveBeenCalled() // no NSFW lookup needed to go private
+        expect(analysesBuilder.update).toHaveBeenCalledWith({ is_public: false })
+    })
 })
 
 describe('addComment', () => {
