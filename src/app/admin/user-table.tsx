@@ -3,11 +3,10 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { getUserAnalyses, restoreSubmission, hardDeleteSubmission, updateUserCredits } from './actions'
 import { X, ExternalLink, Loader2, Image as ImageIcon, Trash2, RefreshCw, AlertTriangle, Plus, Minus, Coins } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
-interface Profile {
+export interface Profile {
     id: string
     email: string | null
     created_at: string
@@ -22,9 +21,11 @@ interface Profile {
     }
 }
 
+type UserAnalyses = Awaited<ReturnType<typeof getUserAnalyses>>
+
 export function UserTable({ profiles }: { profiles: Profile[] }) {
     const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
-    const [analyses, setAnalyses] = useState<any[]>([])
+    const [analyses, setAnalyses] = useState<UserAnalyses>([])
     const [loading, setLoading] = useState(false)
     const [creditAmount, setCreditAmount] = useState(1)
     const [updatingCredits, setUpdatingCredits] = useState(false)
@@ -55,7 +56,7 @@ export function UserTable({ profiles }: { profiles: Profile[] }) {
                 ...selectedUser,
                 credits_balance: selectedUser.credits_balance + amount
             })
-        } catch (e) {
+        } catch {
             alert('Failed to update credits')
         } finally {
             setUpdatingCredits(false)

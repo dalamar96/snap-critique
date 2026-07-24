@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { StorageCleanupModal } from './storage-manager'
-import { Sidebar, Activity, Users, Database, Globe, Search, Lock, List, ArrowRight, AlertTriangle, HardDrive, ShieldCheck } from 'lucide-react'
+import { Activity, Users, Database, Globe, Search, List, ArrowRight, AlertTriangle, HardDrive, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { UserTable } from './user-table'
 import { UnclaimedTable } from './unclaimed-table'
@@ -10,9 +10,10 @@ import { AllAnalysesTable } from './all-analyses-table'
 import { ErrorLogTable } from './error-log-table'
 import { SupportInbox } from './support-inbox'
 import { AuditLogTable } from './audit-log-table'
+import type { Profile } from './user-table'
 
 interface DashboardData {
-    users: any[]
+    users: Profile[]
     userCount: number
     unclaimedCount: number
     totalRevenue: number

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { updateProfile } from '../actions'
 import { Button } from '@/components/ui/button'
@@ -19,9 +20,20 @@ interface TaxonomyType {
     sort_order: number
 }
 
+interface ProfileData {
+    avatar_url?: string | null
+    is_public?: boolean | null
+    full_name?: string | null
+    business_name?: string | null
+    website_url?: string | null
+    bio?: string | null
+    camera_brands?: string[] | null
+    photography_types?: string[] | null
+}
+
 interface ProfileFormProps {
-    user: any
-    profile: any
+    user: SupabaseUser
+    profile: ProfileData | null
     initialAvatarUrl: string
     availableBrands: string[]
     availableTypes: TaxonomyType[]
@@ -127,7 +139,7 @@ export function ProfileForm({ user, profile, initialAvatarUrl, availableBrands, 
             await updateAvatar(filePath)
 
             toast.success("Avatar updated")
-        } catch (error: any) {
+        } catch (error) {
             toast.error("Error uploading avatar")
             console.error(error)
         } finally {

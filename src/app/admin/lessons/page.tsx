@@ -2,7 +2,6 @@ import { getAdminLessons } from '../actions'
 import { AdminLessonsClient } from './client'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getLearningTree, LessonNode } from '@/app/learning/actions'
 
 export default async function AdminLessonsPage() {
     // Auth Check

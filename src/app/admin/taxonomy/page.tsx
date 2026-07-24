@@ -1,6 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { addBrand, deleteBrand, addType, deleteType } from './actions'
-import { revalidatePath } from 'next/cache'
+import { addBrand, deleteBrand, addType } from './actions'
 import { Trash2, Plus } from 'lucide-react'
 import { TaxonomyTree } from './taxonomy-tree'
 

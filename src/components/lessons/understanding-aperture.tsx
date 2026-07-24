@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Image from 'next/image'
-import { Aperture, Sun, Eye, Layers, ZoomIn, Ruler, BookOpen, AlertTriangle, Camera } from 'lucide-react'
+import { Aperture, Sun, Eye, Layers, ZoomIn, BookOpen, AlertTriangle, Camera } from 'lucide-react'
 
 export function UnderstandingAperture() {
   return (
@@ -118,7 +118,7 @@ export function UnderstandingAperture() {
             <div className="p-6 grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                      <p className="text-sm">
-                        Subject sharp, background softly blurred. The viewer's attention is tightly controlled. 
+                        Subject sharp, background softly blurred. The viewer&apos;s attention is tightly controlled.
                         Communicates <strong>intimacy, isolation, and emotion</strong>.
                      </p>
                      <div>
@@ -231,7 +231,7 @@ export function UnderstandingAperture() {
             <div className="space-y-2">
                 <strong className="text-orange-400 block">1. Bokeh</strong>
                 <p className="text-sm text-slate-400">
-                    The quality of the out-of-focus blur. It's affected by lens design and aperture shape. Remember: More blur ≠ better blur. Smoothness is key.
+                    The quality of the out-of-focus blur. It&apos;s affected by lens design and aperture shape. Remember: More blur ≠ better blur. Smoothness is key.
                 </p>
             </div>
              <div className="space-y-2">

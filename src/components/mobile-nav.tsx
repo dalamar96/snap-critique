@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, LayoutDashboard, User, LifeBuoy, LogOut, Camera, BookOpen, Info, Compass, Users, Database } from 'lucide-react'
+import { Menu, X, LayoutDashboard, User, LifeBuoy, LogOut, BookOpen, Info, Compass, Users, Database } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { signout } from '@/app/auth/actions'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 interface MobileNavProps {
-    user: any
+    user: SupabaseUser | null
 }
 
 export function MobileNav({ user }: MobileNavProps) {

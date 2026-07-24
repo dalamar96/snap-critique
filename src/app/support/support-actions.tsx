@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { resolveConversation, deleteConversation } from '@/app/actions/messaging'
-import { CheckCircle, Trash2, RotateCcw } from 'lucide-react'
+import { CheckCircle, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export function SupportActions({ status }: { status: string }) {

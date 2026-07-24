@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { getAllSubmissions, hardDeleteSubmission, restoreSubmission } from './actions'
+
+type Submission = Awaited<ReturnType<typeof getAllSubmissions>>[number]
 import { Loader2, ExternalLink, Image as ImageIcon, X, Trash2, Undo } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
@@ -14,7 +16,7 @@ export function AllAnalysesTable({
     isOpen: boolean
     onClose: () => void 
 }) {
-    const [submissions, setSubmissions] = useState<any[]>([])
+    const [submissions, setSubmissions] = useState<Submission[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -79,7 +81,7 @@ export function AllAnalysesTable({
                                             <div className="flex items-center gap-3">
                                                  <div className="w-12 h-12 bg-black rounded overflow-hidden flex-shrink-0 border border-white/10 relative">
                                                     {sub.signedUrl ? (
-                                                        <img src={sub.signedUrl} className="w-full h-full object-cover" />
+                                                        <img src={sub.signedUrl} alt={sub.analyses?.[0]?.title || 'Submission thumbnail'} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <ImageIcon className="w-full h-full p-3 text-slate-700" />
                                                     )}

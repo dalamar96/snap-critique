@@ -1,5 +1,5 @@
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -27,15 +27,16 @@ export async function POST(req: Request) {
         }
 
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret || '');
-    } catch (err: any) {
-        console.error(`Webhook signature verification failed: ${err.message}`);
-        return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        console.error(`Webhook signature verification failed: ${message}`);
+        return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
     }
 
     const supabase = createAdminClient();
 
     if (event.type === 'checkout.session.completed') {
-        const session = event.data.object as any;
+        const session = event.data.object as Stripe.Checkout.Session;
         const metadata = session.metadata || {};
 
         // Idempotency guard: Stripe can and does redeliver webhook events

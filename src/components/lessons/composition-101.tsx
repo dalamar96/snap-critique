@@ -14,14 +14,14 @@ export function Composition101() {
             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">Mastering Composition</h1>
             <p className="text-xl md:text-2xl text-slate-300 leading-relaxed font-light">
               Composition is the language of photography. It’s not just <span className="text-white font-medium">what</span> you shoot,
-              but <span className="text-white font-medium">how</span> you arrange the elements to control the viewer's eye.
+              but <span className="text-white font-medium">how</span> you arrange the elements to control the viewer&apos;s eye.
             </p>
         </div>
         
         <div className="bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary p-8 rounded-r-xl">
            <p className="text-xl text-slate-200 italic font-serif">
-            "Strong composition feels intentional. Weak composition feels accidental.
-            The difference is rarely gear and almost always how the scene is organized."
+            &quot;Strong composition feels intentional. Weak composition feels accidental.
+            The difference is rarely gear and almost always how the scene is organized.&quot;
            </p>
         </div>
       </div>
@@ -41,12 +41,12 @@ export function Composition101() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6 text-slate-300 leading-loose">
                 <p>
-                    The Rule of Thirds is likely the first rule you'll learn, and for good reason. It introduces balance without the static feel of perfect symmetry.
+                    The Rule of Thirds is likely the first rule you&apos;ll learn, and for good reason. It introduces balance without the static feel of perfect symmetry.
                 </p>
                 <p>
                     <strong>The Concept:</strong> Imagine dividing your frame into a <span className="text-white font-mono">3×3 grid</span>. 
                     Instead of placing your subject in the center, place them along these lines or at the 
-                    <span className="text-white font-bold"> "power points"</span> (the intersections).
+                    <span className="text-white font-bold"> &quot;power points&quot;</span> (the intersections).
                 </p>
                 <div className="bg-white/5 p-4 rounded-lg text-sm border border-white/10">
                     <strong className="text-primary block mb-2 uppercase text-xs tracking-widest">Advanced Tip: Gaze Direction</strong>
@@ -195,7 +195,7 @@ export function Composition101() {
             <div>
                 <h3 className="text-blue-400 font-bold uppercase tracking-widest text-sm mb-2">Practice Shot: The Urban Canyon</h3>
                 <p className="text-slate-300 text-sm mb-0">
-                    Find a street, hallway, or bridge. Get <strong>low to the ground</strong> to emphasize the lines of the floor/road. Wait for a subject (person, car) to enter the "vanishing point" area before clicking.
+                    Find a street, hallway, or bridge. Get <strong>low to the ground</strong> to emphasize the lines of the floor/road. Wait for a subject (person, car) to enter the &quot;vanishing point&quot; area before clicking.
                 </p>
             </div>
         </div>
@@ -214,7 +214,7 @@ export function Composition101() {
         </div>
         <p className="text-slate-300 leading-7 text-lg">
             Ideally used for nature and portraits, the Golden Ratio (Fibonacci Spiral) is a more complex cousin of the Rule of Thirds. 
-            While thirds are rigid, the Golden Ratio draws the eye in a spiral motion towards the subject. It feels mathematically "correct" and deeply satisfying to the human eye.
+            While thirds are rigid, the Golden Ratio draws the eye in a spiral motion towards the subject. It feels mathematically &quot;correct&quot; and deeply satisfying to the human eye.
         </p>
         <div className="grid grid-cols-2 gap-4">
              <div className="aspect-video bg-black border border-white/10 rounded-lg relative overflow-hidden">
@@ -229,7 +229,7 @@ export function Composition101() {
              </div>
              <div className="bg-white/5 p-6 rounded-lg flex flex-col justify-center">
                  <h4 className="font-bold text-white mb-2">When to use it?</h4>
-                 <p className="text-sm text-slate-400">Use when you have curves in your scene (staircases, seashells, flowers) or when you want a portrait to feel more "classic" and less "edgy".</p>
+                 <p className="text-sm text-slate-400">Use when you have curves in your scene (staircases, seashells, flowers) or when you want a portrait to feel more &quot;classic&quot; and less &quot;edgy&quot;.</p>
              </div>
         </div>
       </section>
@@ -248,8 +248,8 @@ export function Composition101() {
         <div className="flex flex-col md:flex-row gap-8">
              <div className="flex-1 space-y-4">
                  <p className="text-slate-300 leading-7">
-                    Using elements within your scene to "frame" your main subject creates a "picture within a picture". 
-                    This adds context, hides distracting elements, and forces the viewer's eye onto the subject.
+                    Using elements within your scene to &quot;frame&quot; your main subject creates a &quot;picture within a picture&quot;.
+                    This adds context, hides distracting elements, and forces the viewer&apos;s eye onto the subject.
                 </p>
                 <ul className="space-y-2 text-sm text-slate-400">
                     <li className="flex gap-2 items-center"><Box className="w-4 h-4 text-primary" /> Archways or Door frames</li>
@@ -281,7 +281,7 @@ export function Composition101() {
              </div>
         </div>
         <p className="text-slate-300 leading-7 text-lg">
-            Negative space is the "empty" area around your subject. It defines the subject and breathes life into it. 
+            Negative space is the &quot;empty&quot; area around your subject. It defines the subject and breathes life into it. 
             Minimalist photography relies heavily on this. By making the subject small and the surroundings vast, you can convey 
             <strong> isolation, loneliness, freedom, or scale</strong>.
         </p>
@@ -328,15 +328,15 @@ export function Composition101() {
              </div>
         </div>
          <p className="text-slate-300 leading-7">
-             Most beginners shoot from eye level. <strong>Don't be a statue.</strong> Changing your height changes the power dynamic:
+             Most beginners shoot from eye level. <strong>Don&apos;t be a statue.</strong> Changing your height changes the power dynamic:
          </p>
          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-black border border-white/10 p-4 rounded-lg">
-                <span className="text-primary font-bold block mb-1">Worm's Eye (Low)</span>
+                <span className="text-primary font-bold block mb-1">Worm&apos;s Eye (Low)</span>
                 <p className="text-xs text-slate-400">Makes the subject look giant, powerful, and heroic. Great for sports or architecture.</p>
             </div>
             <div className="bg-black border border-white/10 p-4 rounded-lg">
-                <span className="text-primary font-bold block mb-1">Bird's Eye (High)</span>
+                <span className="text-primary font-bold block mb-1">Bird&apos;s Eye (High)</span>
                 <p className="text-xs text-slate-400">Makes the subject look small, vulnerable, or part of a pattern. good for food or flat-lays.</p>
             </div>
             <div className="bg-black border border-white/10 p-4 rounded-lg">
@@ -357,7 +357,7 @@ export function Composition101() {
                     1. The ground looking up. 
                     2. Directly above looking down. 
                     3. Through something else.
-                    Notice how the "feeling" of the object changes.
+                    Notice how the &quot;feeling&quot; of the object changes.
                 </p>
             </div>
          </div>
@@ -367,12 +367,12 @@ export function Composition101() {
       <div className="border-t border-white/10 pt-16 mt-16 text-center">
           <h2 className="text-4xl font-black uppercase text-white mb-6">Breaking the Rules</h2>
           <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-            These aren't laws; they are tools. Learn them so you can use them subconsciously, but don't let them stifle your creativity.
+            These aren&apos;t laws; they are tools. Learn them so you can use them subconsciously, but don&apos;t let them stifle your creativity.
             Sometimes, the most powerful shot is the one that breaks every rule.
           </p>
           <div className="inline-block bg-white/5 px-8 py-4 rounded-full border border-white/20">
               <span className="text-sm font-mono text-primary uppercase tracking-widest mr-2">Final Thought:</span>
-              <span className="text-white font-bold">"If the image communicates emotion, the composition is successful."</span>
+              <span className="text-white font-bold">&quot;If the image communicates emotion, the composition is successful.&quot;</span>
           </div>
       </div>
 

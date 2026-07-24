@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { Comment, CommentType } from '@/types/comments'
-import { User, MessageSquare, Trash2, MapPin } from 'lucide-react'
+import { User, MessageSquare, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { addComment, deleteComment } from '@/app/analysis/actions'
 import { toast } from 'sonner'
@@ -11,7 +12,7 @@ import { useRouter } from 'next/navigation'
 
 interface CommentSectionProps {
     submissionId: string
-    currentUser: any
+    currentUser: SupabaseUser | null
     comments: Comment[]
     activePin: { x: number, y: number } | null
     onOpenPinModal: () => void
@@ -105,7 +106,7 @@ export function CommentSection({
                      isReply ? "w-8 h-8" : "w-10 h-10"
                  )}>
                     {comment.profiles?.avatar_url ? (
-                        <img src={comment.profiles.avatar_url} className="w-full h-full object-cover" />
+                        <img src={comment.profiles.avatar_url} alt={comment.profiles?.full_name || 'Commenter avatar'} className="w-full h-full object-cover" />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-500"><User className={isReply ? "w-4 h-4" : "w-5 h-5"}/></div>
                     )}
@@ -145,7 +146,7 @@ export function CommentSection({
                                 Reply
                             </button>
                         )}
-                        {(currentUser?.id === comment.user_id || currentUser?.is_admin) && (
+                        {currentUser?.id === comment.user_id && (
                             <button onClick={() => handleDelete(comment.id)} className="text-[10px] text-red-500 hover:underline">
                                 Delete
                             </button>

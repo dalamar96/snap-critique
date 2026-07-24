@@ -41,7 +41,7 @@ export function DashboardPublicToggle({ submissionId, initialIsPublic }: Dashboa
         } else {
             toast.success(checked ? "Analysis is now public" : "Analysis is now private")
         }
-    } catch (e) {
+    } catch {
         setIsPublic(!checked)
         toast.error("Something went wrong")
     } finally {
@@ -60,7 +60,7 @@ export function DashboardPublicToggle({ submissionId, initialIsPublic }: Dashboa
               toast.success("Analysis deleted")
               setIsDeleted(true) // Hide the item
           }
-      } catch (e) {
+      } catch {
           toast.error("Failed to delete")
           setIsDeleting(false)
       }

@@ -1,4 +1,5 @@
 import { AnalysisContainer } from '@/components/analysis-container'
+import { AnalysisResult } from '@/components/critique-display'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
@@ -142,7 +143,7 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
           <div className="min-h-screen bg-black flex items-center justify-center p-4">
             <div className="text-center">
               <h1 className="text-white text-xl">Analysis Record Missing</h1>
-              <p className="text-slate-500">Status is 'done' but data is not found.</p>
+              <p className="text-slate-500">Status is &apos;done&apos; but data is not found.</p>
             </div>
           </div>
       )
@@ -223,7 +224,7 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
   const isUnlocked = analysisRecord.is_unlocked || isAdmin
 
   // Type assertion
-  let analysisData = analysisRecord.full_critique as any 
+  let analysisData = analysisRecord.full_critique as AnalysisResult
 
   // SECURITY: Sanitize data on server so it is not sent to client if locked
   if (!isUnlocked) {
@@ -242,7 +243,7 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
           nsfw_score: analysisData.nsfw_score,
           ai_generated_score: analysisData.ai_generated_score,
           goal_score: analysisData.goal_score,
-          goal_feedback: null // Locked
+          goal_feedback: undefined // Locked
       }
   } 
   
@@ -292,7 +293,7 @@ export default async function ResultsPage({ params, searchParams }: { params: Pr
 
   // Sign Avatar URLs for comments
   if (comments.length > 0) {
-      comments = await Promise.all(comments.map(async (c: any) => {
+      comments = await Promise.all(comments.map(async (c) => {
           if (c.profiles?.avatar_url && !c.profiles.avatar_url.startsWith('http')) {
               const { data } = await supabase.storage
                   .from('submissions')

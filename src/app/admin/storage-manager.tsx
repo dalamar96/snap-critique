@@ -51,7 +51,7 @@ export function StorageCleanupModal({ isOpen, onClose }: StorageCleanupModalProp
                 setOrphans(prev => prev.filter(f => f.name !== filename))
                 if (selectedImage === filename) setSelectedImage(null)
             }
-        } catch (e) {
+        } catch {
             alert('Delete failed')
         }
     }

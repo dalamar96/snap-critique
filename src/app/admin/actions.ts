@@ -377,7 +377,7 @@ export async function getErrorLogs(limit = 100) {
     // 2. Manual Join for Profiles
     const userIds = Array.from(new Set(logs.map(l => l.user_id).filter(Boolean)))
 
-    let profilesMap: Record<string, string> = {}
+    const profilesMap: Record<string, string> = {}
 
     if (userIds.length > 0) {
         const { data: profiles } = await adminDb
@@ -574,7 +574,7 @@ export async function upsertLesson(lesson: Partial<LessonNode>) {
     const { user, adminDb } = await requireAdmin()
 
     // Clean payload
-    const payload: any = { ...lesson }
+    const payload: Record<string, unknown> = { ...lesson }
     delete payload.is_completed
     delete payload.children
 
@@ -679,6 +679,7 @@ export async function deleteStorageFile(filename: string) {
         .remove([`previews/${filename}`])
 
     if (uploadError) return { error: 'Failed to delete upload' }
+    if (previewError) return { error: 'Failed to delete preview' }
 
     return { success: true }
 }

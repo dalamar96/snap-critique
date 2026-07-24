@@ -33,8 +33,8 @@ export async function uploadImage(file: File): Promise<string | null> {
         }
 
         return originalPath;
-    } catch (error: any) {
-        console.error('Error uploading file:', error.message)
+    } catch (error) {
+        console.error('Error uploading file:', error instanceof Error ? error.message : error)
         return null
     }
 }

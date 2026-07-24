@@ -1,8 +1,7 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
-import { Lightbulb, Sun, Cloud, Moon, Maximize, Minimize, AlertTriangle, CheckCircle, XCircle, Zap, Palette, Layers, Box, Camera, User, Umbrella, Grid, Eye } from 'lucide-react'
+import { Lightbulb, Sun, Cloud, Maximize, Minimize, AlertTriangle, CheckCircle, XCircle, Zap, Palette } from 'lucide-react'
 
 export function LightingForPhotographers() {
   return (
@@ -19,7 +18,7 @@ export function LightingForPhotographers() {
         
         <div className="bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary p-8 rounded-r-xl">
            <p className="text-xl text-slate-200 italic font-serif">
-            "Lighting is not “brightness.” Lighting is shape, texture, mood, and depth. A camera records what light does to a scene, not the scene itself."
+            &quot;Lighting is not “brightness.” Lighting is shape, texture, mood, and depth. A camera records what light does to a scene, not the scene itself.&quot;
            </p>
         </div>
 
@@ -94,7 +93,7 @@ export function LightingForPhotographers() {
                     <h3 className="text-white font-bold">Specularity</h3>
                 </div>
                 <p className="text-sm text-slate-400">
-                    How "shiny" highlights behave. Small sources create sharp reflections; large sources create smooth highlights.
+                    How &quot;shiny&quot; highlights behave. Small sources create sharp reflections; large sources create smooth highlights.
                 </p>
             </div>
         </div>
@@ -114,7 +113,7 @@ export function LightingForPhotographers() {
 
         <div className="space-y-6 text-slate-300 leading-loose">
             <p>
-                Natural light is not just "sun." It includes open shade, skylight, window light, reflected light, and even streetlight. The key is to recognize that natural light has different personalities depending on time of day and environment.
+                Natural light is not just &quot;sun.&quot; It includes open shade, skylight, window light, reflected light, and even streetlight. The key is to recognize that natural light has different personalities depending on time of day and environment.
             </p>
 
             <div className="grid gap-6">
@@ -132,7 +131,7 @@ export function LightingForPhotographers() {
                 </div>
                 <div className="p-6 bg-slate-900 rounded-lg border-l-4 border-indigo-400">
                     <h3 className="text-white font-bold text-lg mb-2">Open Shade</h3>
-                    <p className="text-sm text-slate-400">Subject protected from sun but lit by skylight. Soft, cool light. <strong>Use:</strong> Classic portraits. Watch for "raccoon eyes" if shade is too overhead.</p>
+                    <p className="text-sm text-slate-400">Subject protected from sun but lit by skylight. Soft, cool light. <strong>Use:</strong> Classic portraits. Watch for &quot;raccoon eyes&quot; if shade is too overhead.</p>
                 </div>
                  <div className="p-6 bg-slate-900 rounded-lg border-l-4 border-white">
                     <h3 className="text-white font-bold text-lg mb-2">Window Light</h3>
@@ -214,7 +213,7 @@ export function LightingForPhotographers() {
                         <div className="bg-primary/20 p-2 rounded text-primary font-bold min-w-[3rem] text-center">30°</div>
                         <div>
                             <strong className="text-white block">Loop</strong>
-                            <span className="text-slate-400 text-sm">Nose shadow "loops" onto cheek but doesn't connect. Flattering, standard.</span>
+                            <span className="text-slate-400 text-sm">Nose shadow &quot;loops&quot; onto cheek but doesn&apos;t connect. Flattering, standard.</span>
                         </div>
                      </div>
                      <div className="flex gap-4 items-start bg-white/5 p-4 rounded-lg">
@@ -264,7 +263,7 @@ export function LightingForPhotographers() {
                         <span className="text-slate-400">Color control (correction or creative). Warning: Overuse looks amateur.</span>
                     </div>
                  </div>
-                 <p className="text-center italic text-slate-400 text-sm">"Modifiers do not create style. They enable control."</p>
+                 <p className="text-center italic text-slate-400 text-sm">&quot;Modifiers do not create style. They enable control.&quot;</p>
             </div>
 
             {/* Workflow */}
@@ -274,7 +273,7 @@ export function LightingForPhotographers() {
                     <div className="relative pl-12">
                         <div className="absolute left-0 top-0 w-10 h-10 bg-primary rounded-full flex items-center justify-center font-bold text-black">1</div>
                         <h4 className="text-white font-bold text-lg">One Light (Mastery)</h4>
-                        <p className="text-slate-400 text-sm mt-1">Placement matters more than power. Use one light to define key. Use a reflector for contrast control. If you can't make it look good with one light, more won't help.</p>
+                        <p className="text-slate-400 text-sm mt-1">Placement matters more than power. Use one light to define key. Use a reflector for contrast control. If you can&apos;t make it look good with one light, more won&apos;t help.</p>
                     </div>
                     <div className="relative pl-12">
                          <div className="absolute left-0 top-0 w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center font-bold text-white border border-white/20">2</div>
@@ -359,7 +358,7 @@ export function LightingForPhotographers() {
                     </li>
                     <li className="flex gap-3">
                         <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-                        <span><strong>Adding lights to fix placement:</strong> More lights won't fix a bad key light. Diagnose, don't add.</span>
+                        <span><strong>Adding lights to fix placement:</strong> More lights won&apos;t fix a bad key light. Diagnose, don&apos;t add.</span>
                     </li>
                     <li className="flex gap-3">
                         <XCircle className="w-5 h-5 text-red-400 shrink-0" />
@@ -374,7 +373,7 @@ export function LightingForPhotographers() {
         </div>
         
         <div className="text-center pt-8">
-            <p className="text-xl text-white font-bold mb-2">"If something feels off, remove complexity before adding it."</p>
+            <p className="text-xl text-white font-bold mb-2">&quot;If something feels off, remove complexity before adding it.&quot;</p>
         </div>
       </section>
 

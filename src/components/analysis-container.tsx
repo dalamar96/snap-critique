@@ -1,22 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { CritiqueDisplay } from '@/components/critique-display'
+import { User } from '@supabase/supabase-js'
+import { CritiqueDisplay, AnalysisResult, AnalysisMetadata } from '@/components/critique-display'
 import { CommentSection } from '@/components/comments/comment-section'
 import { Comment } from '@/types/comments'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { InteractiveImage } from '@/components/comments/interactive-image'
 
 interface AnalysisContainerProps {
-    analysis: any
+    analysis: AnalysisResult
     analysisId: string
     isUnlocked: boolean
     imageUrl: string | null
     userCredits: number
     isGuest: boolean
-    metadata: any
+    metadata: AnalysisMetadata | null
     comments: Comment[]
-    currentUser: any
+    currentUser: User | null
     lessonContext?: { title: string, slug: string } | null
 }
 

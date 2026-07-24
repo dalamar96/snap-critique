@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Image from 'next/image'
-import { Timer, Zap, Eye, Camera, Activity, AlertTriangle, Play, Smartphone } from 'lucide-react'
+import { Timer, Zap, Camera, Activity, AlertTriangle, Play, Smartphone } from 'lucide-react'
 
 export function ShutterSpeedBasics() {
   return (
@@ -40,7 +40,7 @@ export function ShutterSpeedBasics() {
       <section className="space-y-6">
         <h2 className="text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-3">
             <Timer className="w-8 h-8 text-blue-500" />
-            How It's Measured
+            How It&apos;s Measured
         </h2>
         
         <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -72,7 +72,7 @@ export function ShutterSpeedBasics() {
             
             <div className="bg-white/5 p-6 rounded-xl border border-white/10">
                 <strong className="text-blue-400 block mb-2 uppercase tracking-widest text-xs">Teaching Point: Stops</strong>
-                <p className="text-sm mb-4">Each full "stop" doubles or halves the amount of light.</p>
+                <p className="text-sm mb-4">Each full &quot;stop&quot; doubles or halves the amount of light.</p>
                 <div className="flex gap-4 text-xs font-mono text-center">
                     <div className="bg-black/50 p-2 rounded flex-1">
                         <span className="block text-slate-500 mb-1">1/250</span>

@@ -240,17 +240,14 @@ export async function seedHierarchy() {
         }
     }
 
-    // 4. Insert Children (Level 2)
-    const level2 = photography_types.filter(t => t.parentId !== null && idMap[t.parentId!])
-
-    // Some children might be Level 3 (grandkids), which depend on Level 2 IDs.
+    // 4. Insert Children (Level 2+)
+    // Children might be Level 3 (grandkids), which depend on Level 2 IDs.
     // So we need to process layer by layer.
     // Simpler: Just loop until we've inserted everyone or made no progress.
 
     let remaining = photography_types.filter(t => t.parentId !== null)
     let loopGuard = 0
     while (remaining.length > 0 && loopGuard < 10) {
-        const toInsert = []
         const nextRemaining = []
 
         for (const item of remaining) {

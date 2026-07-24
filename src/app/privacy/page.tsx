@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         </p>
         <ul className="list-disc pl-6 mt-4 space-y-2">
             <li><strong>Information You Give Us:</strong> We receive and store any information you provide in relation to Snap Critique Services. You can choose not to provide certain information, but then you might not be able to take advantage of many of our Snap Critique Services.</li>
-            <li><strong>Automatic Information:</strong> We automatically collect and store certain types of information about your use of Snap Critique Services, including information about your interaction with content and services available through Snap Critique Services. Like many websites, we use "cookies" and other unique identifiers, and we obtain certain types of information when your web browser or device accesses Snap Critique Services.</li>
+            <li><strong>Automatic Information:</strong> We automatically collect and store certain types of information about your use of Snap Critique Services, including information about your interaction with content and services available through Snap Critique Services. Like many websites, we use &quot;cookies&quot; and other unique identifiers, and we obtain certain types of information when your web browser or device accesses Snap Critique Services.</li>
              <li><strong>Information from Other Sources:</strong> We might receive information about you from other sources, such as updated delivery and address information from our carriers, which we use to correct our records and deliver your next purchase more easily.</li>
         </ul>
 
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
           Does Snap Critique Share Your Personal Information?
         </h2>
         <p className="leading-7 [&:not(:first-child)]:mt-6">
-          Information about our customers is an important part of our business, and we are not in the business of selling our customers' personal information to others. We share customers' personal information only as described below and with subsidiaries Beach Breeze Studios controls that either are subject to this Privacy Notice or follow practices at least as protective as those described in this Privacy Notice.
+          Information about our customers is an important part of our business, and we are not in the business of selling our customers&apos; personal information to others. We share customers&apos; personal information only as described below and with subsidiaries Beach Breeze Studios controls that either are subject to this Privacy Notice or follow practices at least as protective as those described in this Privacy Notice.
         </p>
         <ul className="list-disc pl-6 mt-4 space-y-2">
              <li><strong>Third-Party Service Providers:</strong> We employ other companies and individuals to perform functions on our behalf. Examples include fulfilling orders for products or services, delivering packages, sending postal mail and e-mail, removing repetitive information from customer lists, analyzing data, providing marketing assistance, providing search results and links (including paid listings and links), processing payments, transmitting content, scoring, assessing and managing credit risk, and providing customer service. These third-party service providers have access to personal information needed to perform their functions, but may not use it for other purposes.</li>
@@ -88,7 +88,7 @@ export default function PrivacyPage() {
          <ul className="list-disc pl-6 mt-4 space-y-2">
              <li>As described above, you can always choose not to provide certain information, but then you might not be able to take advantage of many of the Snap Critique Services.</li>
              <li>You can add or update certain information on pages such as those referenced in the Help sections. When you update information, we usually keep a copy of the prior version for our records.</li>
-             <li>If you do not want to receive e-mail or other communications from us, please adjust your Customer Communication Preferences. If you don't want to receive in-app notifications from us, please adjust your notification settings in the app or device.</li>
+             <li>If you do not want to receive e-mail or other communications from us, please adjust your Customer Communication Preferences. If you don&apos;t want to receive in-app notifications from us, please adjust your notification settings in the app or device.</li>
              <li>The Help feature on most browsers and devices will tell you how to prevent your browser or device from accepting new cookies or other identifiers, how to have the browser notify you when you receive a new cookie, or how to block cookies altogether. Because cookies and identifiers allow you to take advantage of some essential features of Snap Critique Services, we recommend that you leave them turned on.</li>
          </ul>
 

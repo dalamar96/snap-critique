@@ -50,7 +50,7 @@ export function UploadZone({ userCredits = null, isGuest = true }: UploadZonePro
          alert('Upload failed. Please try again.')
          setIsUploading(false)
        }
-  }, [router])
+  }, [router, isBlocked])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()

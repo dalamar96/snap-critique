@@ -5,7 +5,19 @@ type LogLevel = 'info' | 'warn' | 'error' | 'fatal'
 interface LogContext {
     userId?: string
     path?: string
-    [key: string]: any
+    [key: string]: unknown
+}
+
+// Duck-typed extraction so both real Errors and Supabase's PostgrestError
+// (which carries `.message` but isn't `instanceof Error`) get logged with
+// a useful message instead of being silently dropped.
+function getErrorMessage(error: unknown): string | undefined {
+    if (error instanceof Error) return error.message
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+        const message = (error as { message: unknown }).message
+        return typeof message === 'string' ? message : undefined
+    }
+    return undefined
 }
 
 export class Logger {
@@ -67,9 +79,10 @@ export class Logger {
         }
     }
 
-    static async error(message: string, error?: any, context?: LogContext) {
-        const stack = error?.stack || (error instanceof Error ? error.stack : undefined)
-        const msg = message + (error?.message ? `: ${error.message}` : '')
+    static async error(message: string, error?: unknown, context?: LogContext) {
+        const stack = error instanceof Error ? error.stack : undefined
+        const errorMessage = getErrorMessage(error)
+        const msg = message + (errorMessage ? `: ${errorMessage}` : '')
 
         // Always log to console in dev or for immediate visibility
         if (process.env.NODE_ENV === 'development') {

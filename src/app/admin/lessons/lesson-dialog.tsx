@@ -11,11 +11,12 @@ import { LessonNode } from '@/app/learning/actions'
 import { upsertLesson, getLessonComponents } from '../actions'
 import { toast } from 'sonner'
 import * as Icons from 'lucide-react'
+import { LucideIcon } from 'lucide-react'
 
 // Helper for Icon Selection
 const IconSelector = ({ value, onChange }: { value: string, onChange: (v: string) => void }) => {
     // Could build a fancy grid, but for now a simple input with preview is workable
-    const IconComponent = (Icons as any)[value]
+    const IconComponent = (Icons as unknown as Record<string, LucideIcon>)[value]
     return (
         <div className="flex items-center gap-2">
             <div className="w-10 h-10 border rounded flex items-center justify-center bg-white/5">
@@ -88,8 +89,8 @@ export function LessonDialog({ open, onOpenChange, lesson, allLessons, onSuccess
             toast.success("Lesson saved successfully")
             onSuccess()
             onOpenChange(false)
-        } catch (error: any) {
-            toast.error(error.message)
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to save lesson')
         } finally {
             setLoading(false)
         }
@@ -148,7 +149,7 @@ export function LessonDialog({ open, onOpenChange, lesson, allLessons, onSuccess
                             <select 
                                 className="w-full h-10 px-3 rounded-md border text-sm bg-transparent"
                                 value={formData.level}
-                                onChange={e => setFormData(p => ({ ...p, level: e.target.value as any }))}
+                                onChange={e => setFormData(p => ({ ...p, level: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced' }))}
                             >
                                 <option value="Beginner">Beginner</option>
                                 <option value="Intermediate">Intermediate</option>
@@ -212,7 +213,7 @@ export function LessonDialog({ open, onOpenChange, lesson, allLessons, onSuccess
                             <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
                                 <Label>Learning Goals & Context</Label>
                                 <span className="text-xs text-slate-500 block">
-                                    Describe what the AI should look for in the student's photo. (e.g. "Focus on leading lines and rule of thirds")
+                                    Describe what the AI should look for in the student&apos;s photo. (e.g. &quot;Focus on leading lines and rule of thirds&quot;)
                                 </span>
                                 <Textarea 
                                     className="min-h-[100px]"

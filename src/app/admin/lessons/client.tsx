@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { LessonNode } from '@/app/learning/actions'
 import { deleteLesson } from '../actions'
 import { Button } from '@/components/ui/button'
-import { Plus, Pencil, Trash, BookOpen, Layers } from 'lucide-react'
+import { Plus, Pencil, Trash, Layers, LucideIcon } from 'lucide-react'
 import { LessonDialog } from './lesson-dialog'
 import { toast } from 'sonner'
 import * as Icons from 'lucide-react'
@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 // Helper
 const DynamicIcon = ({ name, className }: { name: string | null, className?: string }) => {
     if (!name) return <Icons.BookOpen className={className} />
-    const IconComponent = (Icons as any)[name]
+    const IconComponent = (Icons as unknown as Record<string, LucideIcon>)[name]
     return IconComponent ? <IconComponent className={className} /> : <Icons.BookOpen className={className} />
 }
 
@@ -40,8 +40,8 @@ export function AdminLessonsClient({ initialLessons }: { initialLessons: LessonN
             await deleteLesson(id)
             setLessons(prev => prev.filter(l => l.id !== id))
             toast.success("Lesson deleted")
-        } catch (error: any) {
-            toast.error(error.message)
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Failed to delete lesson')
         }
     }
 

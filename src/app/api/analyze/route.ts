@@ -9,7 +9,7 @@ import { Logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 // Helper to clean up orphaned files
-async function cleanupFiles(supabase: any, imagePath: string) {
+async function cleanupFiles(supabase: ReturnType<typeof createAdminClient>, imagePath: string) {
     if (!imagePath) return;
     try {
         const pathsToCheck = [
@@ -123,7 +123,20 @@ export async function POST(req: NextRequest) {
         }
 
         // 2a. Extract EXIF Metadata
-        let exifData: any = {}
+        interface ExifData {
+            make?: string
+            camera?: string
+            lens?: string
+            iso?: string
+            focal_length?: string
+            aperture?: string
+            shutter_speed?: string
+            exposure_comp?: string
+            metering?: string
+            flash?: string
+            datetime?: string
+        }
+        let exifData: ExifData = {}
         let technicalContext = ""
         try {
             const tags = ExifReader.load(originalBuffer);
@@ -141,7 +154,7 @@ export async function POST(req: NextRequest) {
                     flash: tags['Flash']?.description,
                     datetime: tags['DateTimeOriginal']?.description
                 }
-                Object.keys(exifData).forEach(key => exifData[key] === undefined && delete exifData[key]);
+                ;(Object.keys(exifData) as (keyof ExifData)[]).forEach(key => exifData[key] === undefined && delete exifData[key]);
 
                 if (Object.keys(exifData).length > 0) {
                     technicalContext = `
@@ -236,7 +249,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 5. Store Result in DB & Deduct Credit
-        const submissionPayload: any = {
+        const submissionPayload: Record<string, unknown> = {
             image_path: imagePath,
             thumbnail_path: previewPath,
             category,

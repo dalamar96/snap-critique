@@ -5,18 +5,22 @@ import { Plus, Trash2, ChevronRight, ChevronDown } from 'lucide-react'
 import { addType, deleteType } from './actions'
 import { toast } from 'sonner'
 
-interface TypeNode {
+interface TaxonomyTypeRow {
     id: string
     name: string
     parent_id: string | null
+    sort_order: number
+}
+
+interface TypeNode extends TaxonomyTypeRow {
     children: TypeNode[]
 }
 
 interface TaxonomyTreeProps {
-    types: any[]
+    types: TaxonomyTypeRow[]
 }
 
-function buildTree(items: any[]): TypeNode[] {
+function buildTree(items: TaxonomyTypeRow[]): TypeNode[] {
     const map = new Map<string, TypeNode>()
     const roots: TypeNode[] = []
 

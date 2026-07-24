@@ -35,7 +35,7 @@ export function ShareAnalysisDialog({ submissionId, initialIsPublic, trigger }: 
         } else {
             toast.success(checked ? "Analysis is now public" : "Analysis is now private")
         }
-    } catch (e) {
+    } catch {
         setIsPublic(!checked)
         toast.error("Something went wrong")
     } finally {

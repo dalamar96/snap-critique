@@ -4,12 +4,14 @@ import { LessonNode } from '@/app/learning/actions'
 import { Card, CardContent } from '@/components/ui/card'
 import * as Icons from 'lucide-react'
 import Link from 'next/link'
-import { CheckCircle2, Circle } from 'lucide-react'
+import { CheckCircle2, Circle, LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface GroupViewClientProps {
-    lesson: any // Typed as the specific return from getLessonBySlug + children
+    lesson: LessonNode
 }
+
+const IconMap = Icons as unknown as Record<string, LucideIcon>
 
 export function GroupViewClient({ lesson }: GroupViewClientProps) {
     const children = lesson.children as LessonNode[]
@@ -18,7 +20,7 @@ export function GroupViewClient({ lesson }: GroupViewClientProps) {
     const progress = Math.round((completedCount / totalCount) * 100) || 0
 
     // Dynamic Icon for the Header
-    const IconComponent = (Icons as any)[lesson.icon || 'BookOpen'] || Icons.BookOpen
+    const IconComponent = IconMap[lesson.icon || 'BookOpen'] || Icons.BookOpen
 
     return (
         <div className="max-w-4xl mx-auto py-12 px-4 space-y-8">
@@ -67,7 +69,7 @@ export function GroupViewClient({ lesson }: GroupViewClientProps) {
             {/* Children Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {children.map((child) => {
-                     const ChildIcon = (Icons as any)[child.icon || 'FileText'] || Icons.FileText
+                     const ChildIcon = IconMap[child.icon || 'FileText'] || Icons.FileText
                      
                      return (
                         <Link 

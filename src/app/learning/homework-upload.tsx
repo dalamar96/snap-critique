@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { motion, AnimatePresence } from 'framer-motion'
 
 interface HomeworkUploadProps {
     lessonId: string
@@ -16,13 +15,13 @@ interface HomeworkUploadProps {
     userCredits: number
 }
 
-export function HomeworkUpload({ lessonId, lessonTitle, learningGoals, userCredits }: HomeworkUploadProps) {
+export function HomeworkUpload({ lessonId, learningGoals, userCredits }: HomeworkUploadProps) {
     const router = useRouter()
     const fileInputRef = useRef<HTMLInputElement>(null)
-    
+
     // States: 'upload' | 'context' | 'analyzing'
     const [step, setStep] = useState<'upload' | 'context' | 'analyzing'>('upload')
-    const [file, setFile] = useState<File | null>(null)
+    const [, setFile] = useState<File | null>(null)
     const [imagePath, setImagePath] = useState<string | null>(null)
     const [context, setContext] = useState('')
     const [isDragging, setIsDragging] = useState(false)
@@ -50,7 +49,7 @@ export function HomeworkUpload({ lessonId, lessonTitle, learningGoals, userCredi
             } else {
                 toast.error('Upload failed')
             }
-        } catch (e) {
+        } catch {
             toast.error('System error during upload')
         } finally {
             setIsUploading(false)
@@ -93,7 +92,7 @@ export function HomeworkUpload({ lessonId, lessonTitle, learningGoals, userCredi
                 toast.error(data.error || 'Analysis failed')
                 setStep('context')
             }
-        } catch (e) {
+        } catch {
             toast.error('Network error')
             setStep('context')
         }

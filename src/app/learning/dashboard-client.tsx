@@ -4,13 +4,13 @@ import { useState, useMemo } from 'react'
 import { LessonNode } from './actions'
 import Link from 'next/link'
 import * as Icons from 'lucide-react'
-import { CheckCircle, Circle, Lock, Layers } from 'lucide-react'
+import { CheckCircle, Circle, Layers, LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Helper to render dynamic icon
 const DynamicIcon = ({ name, className }: { name: string | null, className?: string }) => {
     if (!name) return <Icons.BookOpen className={className} />
-    const IconComponent = (Icons as any)[name]
+    const IconComponent = (Icons as unknown as Record<string, LucideIcon>)[name]
     return IconComponent ? <IconComponent className={className} /> : <Icons.BookOpen className={className} />
 }
 

@@ -10,6 +10,15 @@ export const metadata = {
 
 export const revalidate = 60 // Revalidate every minute
 
+interface GalleryAnalysisRow {
+  id: string
+  title: string
+  score: number
+  submission_id: string
+  full_critique: { nsfw_score?: number; ai_generated_score?: number } | null
+  submissions: { id: string; image_path: string | null; deleted_at: string | null } | null
+}
+
 export default async function GalleryPage() {
   const supabase = createAdminClient()
 
@@ -37,7 +46,7 @@ export default async function GalleryPage() {
   // (e.g. public bucket or CDN), but for this scale, batch signed URLs works well.
   
   const galleryItems = await Promise.all(
-    (analyses || []).map(async (item: any) => {
+    ((analyses || []) as unknown as GalleryAnalysisRow[]).map(async (item) => {
         let imageUrl = '/placeholder.png'
         if (item.submissions?.image_path) {
              const previewPath = item.submissions.image_path.replace('uploads/', 'previews/')

@@ -26,7 +26,9 @@ export function AuditLogTable({ onClose }: { onClose: () => void }) {
     }
 
     useEffect(() => {
-        fetchLogs()
+        // Defer to a microtask so the initial setLoading(true) inside
+        // fetchLogs doesn't run synchronously within the effect.
+        queueMicrotask(() => { fetchLogs() })
     }, [])
 
     return (

@@ -6,14 +6,16 @@ import { Loader2, ExternalLink, Image as ImageIcon, X } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
-export function UnclaimedTable({ 
-    isOpen, 
-    onClose 
-}: { 
+type UnclaimedSubmission = Awaited<ReturnType<typeof getUnclaimedSubmissions>>[number]
+
+export function UnclaimedTable({
+    isOpen,
+    onClose
+}: {
     isOpen: boolean
-    onClose: () => void 
+    onClose: () => void
 }) {
-    const [submissions, setSubmissions] = useState<any[]>([])
+    const [submissions, setSubmissions] = useState<UnclaimedSubmission[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -76,7 +78,7 @@ export function UnclaimedTable({
                                             <div className="flex items-center gap-3">
                                                  <div className="w-12 h-12 bg-black rounded overflow-hidden flex-shrink-0 border border-white/10">
                                                     {sub.signedUrl ? (
-                                                        <img src={sub.signedUrl} className="w-full h-full object-cover" />
+                                                        <img src={sub.signedUrl} alt="Submission thumbnail" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <ImageIcon className="w-full h-full p-3 text-slate-700" />
                                                     )}

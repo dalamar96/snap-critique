@@ -2,7 +2,7 @@
 import { User } from '@supabase/supabase-js'
 
 import { useState } from 'react'
-import { Check, Zap, Star, Shield, ArrowRight } from 'lucide-react'
+import { Check, Zap, Shield, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'

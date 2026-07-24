@@ -9,7 +9,7 @@ interface ErrorLog {
     level: string
     message: string
     stack?: string
-    context?: any
+    context?: unknown
     source: string
     profiles?: { email: string }
 }
@@ -36,7 +36,9 @@ export function ErrorLogTable({ onClose }: { onClose: () => void }) {
     }
 
     useEffect(() => {
-        fetchLogs()
+        // Defer to a microtask so the initial setLoading(true) inside
+        // fetchLogs doesn't run synchronously within the effect.
+        queueMicrotask(() => { fetchLogs() })
     }, [])
 
     return (
@@ -127,7 +129,7 @@ export function ErrorLogTable({ onClose }: { onClose: () => void }) {
                                                             </pre>
                                                         </div>
                                                     )}
-                                                    {log.context && (
+                                                    {Boolean(log.context) && (
                                                         <div>
                                                             <div className="text-xs uppercase text-slate-500 mb-1">Context</div>
                                                             <pre className="text-xs text-green-400 overflow-x-auto p-2 bg-green-950/10 border border-green-900/20 rounded">

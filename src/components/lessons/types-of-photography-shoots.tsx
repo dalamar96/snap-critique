@@ -1,8 +1,7 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
-import { Camera, Sun, Mountain, Users, Calendar, Box, Lightbulb, Building2, User } from 'lucide-react'
+import { Camera, Mountain, Calendar, Box, Lightbulb, Building2, User } from 'lucide-react'
 
 export function TypesOfPhotographyShoots() {
   return (
@@ -19,7 +18,7 @@ export function TypesOfPhotographyShoots() {
         
         <div className="bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary p-8 rounded-r-xl">
            <p className="text-xl text-slate-200 italic font-serif">
-            "A common beginner mistake is assuming that good photography is universal technique applied everywhere. In reality, strong photography is adaptive decision-making."
+            &quot;A common beginner mistake is assuming that good photography is universal technique applied everywhere. In reality, strong photography is adaptive decision-making.&quot;
            </p>
         </div>
 
@@ -236,7 +235,7 @@ export function TypesOfPhotographyShoots() {
                         </li>
                         <li className="flex gap-2">
                             <span className="text-green-500">✓</span>
-                            <span>Arrive early, stay late (don't leave too soon).</span>
+                            <span>Arrive early, stay late (don&apos;t leave too soon).</span>
                         </li>
                         <li className="flex gap-2">
                             <span className="text-green-500">✓</span>
@@ -276,7 +275,7 @@ export function TypesOfPhotographyShoots() {
                  <div className="bg-white/5 p-6 rounded-xl border border-white/10">
                     <h4 className="text-primary font-bold mb-4">Key Considerations</h4>
                     <ul className="space-y-3 text-sm text-slate-300">
-                        <li><strong>Lighting:</strong> Often a negotiation. Natural light is the foundation, but may need shaping. Artificial light shouldn't overpower the environment.</li>
+                        <li><strong>Lighting:</strong> Often a negotiation. Natural light is the foundation, but may need shaping. Artificial light shouldn&apos;t overpower the environment.</li>
                         <li><strong>Aperture:</strong> One of the most critical decisions. Too wide erases context; too narrow dilutes the subject.</li>
                         <li><strong>Composition:</strong> Architectural lines and objects must guide the eye toward the subject, not away.</li>
                     </ul>
@@ -353,7 +352,7 @@ export function TypesOfPhotographyShoots() {
                 <ul className="space-y-3 text-sm text-slate-300">
                     <li><strong>Tunnel Vision:</strong> Locking onto one subject while other moments unfold elsewhere.</li>
                     <li><strong>Technical Rigidity:</strong> Resisting setting changes as conditions shift.</li>
-                    <li><strong>Prioritizing Aesthetics:</strong> Choosing "artistic" settings that lead to missed or unusable images (blur, focus errors).</li>
+                    <li><strong>Prioritizing Aesthetics:</strong> Choosing &quot;artistic&quot; settings that lead to missed or unusable images (blur, focus errors).</li>
                 </ul>
             </div>
 
@@ -475,7 +474,7 @@ export function TypesOfPhotographyShoots() {
           </p>
           <div className="inline-block bg-white/5 px-8 py-4 rounded-full border border-white/20">
               <span className="text-sm font-mono text-primary uppercase tracking-widest mr-2">Guiding Principle:</span>
-              <span className="text-white font-bold">"The environment dictates your priorities, not your preferences."</span>
+              <span className="text-white font-bold">&quot;The environment dictates your priorities, not your preferences.&quot;</span>
           </div>
       </div>
 

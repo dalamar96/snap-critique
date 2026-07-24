@@ -43,10 +43,9 @@ export default async function SupportPage() {
                 </div>
 
                 <div className="flex-1 min-h-0 pb-2 md:pb-0 px-2 md:px-0">
-                    <ChatInterface 
-                        initialMessages={messages} 
-                        onSendMessage={sendMessage} 
-                        currentUserEmail={user.email}
+                    <ChatInterface
+                        initialMessages={messages}
+                        onSendMessage={sendMessage}
                     />
                 </div>
             </div>

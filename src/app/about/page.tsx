@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Check, Camera, Cpu, Zap, Star, ShieldCheck, Sparkles, Grid, User, Users, MapPin, MessageSquare } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ArrowRight, Check, Camera, Zap, Star, ShieldCheck, Sparkles, Grid, User, Users, MapPin, MessageSquare } from 'lucide-react'
 
 export const metadata = {
   title: 'About Snap Critique - AI Photography Mentor',
@@ -220,11 +219,11 @@ export default function AboutPage() {
                      <div className="grid gap-3">
                         <div className="flex items-start gap-4 p-4 border border-white/5 bg-black">
                             <div className="text-primary/40 font-bold text-xl font-mono">01</div>
-                            <span className="font-medium pt-1 text-slate-300 text-sm">Practice 'feathering' a single light source.</span>
+                            <span className="font-medium pt-1 text-slate-300 text-sm">Practice &apos;feathering&apos; a single light source.</span>
                         </div>
                         <div className="flex items-start gap-4 p-4 border border-white/5 bg-black">
                             <div className="text-primary/40 font-bold text-xl font-mono">02</div>
-                            <span className="font-medium pt-1 text-slate-300 text-sm">Experiment with a subtle 'v-flat' or reflector.</span>
+                            <span className="font-medium pt-1 text-slate-300 text-sm">Experiment with a subtle &apos;v-flat&apos; or reflector.</span>
                         </div>
                      </div>
                  </div>
@@ -268,7 +267,7 @@ export default function AboutPage() {
                             <h3 className="text-2xl font-bold text-white uppercase">Prioritized Feedback</h3>
                         </div>
                         <p className="text-slate-400 leading-relaxed text-lg">
-                            The core of Snap Critique. We identify specific areas that distract from your subject, ranked by priority. Whether it's a <span className="text-red-500 font-bold">High Priority</span> pose adjustment or a subtle lighting tweak, you'll know exactly what to fix.
+                            The core of Snap Critique. We identify specific areas that distract from your subject, ranked by priority. Whether it&apos;s a <span className="text-red-500 font-bold">High Priority</span> pose adjustment or a subtle lighting tweak, you&apos;ll know exactly what to fix.
                         </p>
                     </div>
 
@@ -322,7 +321,7 @@ export default function AboutPage() {
                                     <span className="text-xs font-bold text-white">You</span>
                                 </div>
                             </div>
-                            <p className="text-sm text-slate-400">Good catch! I mixed daylight and tungsten. I'll gel it next time.</p>
+                            <p className="text-sm text-slate-400">Good catch! I mixed daylight and tungsten. I&apos;ll gel it next time.</p>
                         </div>
                     </div>
 
@@ -337,7 +336,7 @@ export default function AboutPage() {
                         Collaborative Feedback
                     </div>
                     <h2 className="text-3xl md:text-5xl font-black text-white uppercase mb-6 leading-tight">
-                        Don't Critique Alone.
+                        Don&apos;t Critique Alone.
                     </h2>
                     <p className="text-slate-400 text-lg leading-relaxed mb-8 max-w-lg">
                         AI provides the baseline, but the community provides the nuance. Invite friends, mentors, or the public to review your shots.
@@ -351,7 +350,7 @@ export default function AboutPage() {
                             <div>
                                 <h3 className="text-xl font-bold text-white uppercase mb-2">Pinpoint Precision</h3>
                                 <p className="text-slate-400 text-sm">
-                                    Stop explaining "that blurry part in the top left." <strong className="text-white">Click anywhere on the image</strong> to drop a pin and leave a context-aware comment exactly where it matters.
+                                    Stop explaining &quot;that blurry part in the top left.&quot; <strong className="text-white">Click anywhere on the image</strong> to drop a pin and leave a context-aware comment exactly where it matters.
                                 </p>
                             </div>
                         </div>

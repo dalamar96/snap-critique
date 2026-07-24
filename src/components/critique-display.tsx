@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check, Star, AlertTriangle, ArrowRight, Lock, Terminal, Search } from 'lucide-react'
+import { Check, Star, ArrowRight, Lock, Terminal, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { unlockAnalysis } from '@/app/analysis/actions'
 import { InteractiveImage } from '@/components/comments/interactive-image'
@@ -16,7 +16,7 @@ interface AssessmentItem {
   priority: 'high' | 'medium' | 'low'
 }
 
-interface AnalysisResult {
+export interface AnalysisResult {
   title: string
   score: number
   scores?: {
@@ -35,6 +35,20 @@ interface AnalysisResult {
   preview_summary: string
   goal_score?: number
   goal_feedback?: string
+}
+
+export interface AnalysisMetadata {
+  make?: string
+  camera?: string
+  lens?: string
+  iso?: string
+  focal_length?: string
+  aperture?: string
+  shutter_speed?: string
+  exposure_comp?: string
+  metering?: string
+  flash?: string
+  datetime?: string
 }
 
 const dummyAnalysis: Partial<AnalysisResult> = {
@@ -77,7 +91,7 @@ export function CritiqueDisplay({
   imageUrl?: string | null,
   userCredits?: number,
   isGuest?: boolean,
-  metadata?: any,
+  metadata?: AnalysisMetadata | null,
   comments?: Comment[],
   onImageClick?: (x: number, y: number) => void,
   activePin?: { x: number, y: number } | null,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useOptimistic } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Send, User as UserIcon, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -14,11 +14,10 @@ interface Message {
 interface ChatInterfaceProps {
     initialMessages: Message[]
     onSendMessage: (content: string) => Promise<void>
-    currentUserEmail?: string
     isAdminView?: boolean
 }
 
-export function ChatInterface({ initialMessages, onSendMessage, currentUserEmail, isAdminView = false }: ChatInterfaceProps) {
+export function ChatInterface({ initialMessages, onSendMessage, isAdminView = false }: ChatInterfaceProps) {
     const [input, setInput] = useState('')
     const [isSending, setIsSending] = useState(false)
     const scrollRef = useRef<HTMLDivElement>(null)

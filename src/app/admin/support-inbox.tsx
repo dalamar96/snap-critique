@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getAllConversations, getConversation, replyToUser, markAdminRead, adminResolveConversation, adminDeleteConversation } from './actions'
 import { ChatInterface } from '@/components/chat-interface'
-import { X, Search, Mail, CheckCircle, Trash2, RefreshCw, ArrowLeft } from 'lucide-react'
+import { X, Mail, CheckCircle, Trash2, RefreshCw, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ConversationSummary {
@@ -17,26 +17,13 @@ interface ConversationSummary {
     }
 }
 
+type ConversationMessages = Awaited<ReturnType<typeof getConversation>>
+
 export function SupportInbox({ onClose }: { onClose: () => void }) {
     const [conversations, setConversations] = useState<ConversationSummary[]>([])
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-    const [activeMessages, setActiveMessages] = useState<any[]>([])
+    const [activeMessages, setActiveMessages] = useState<ConversationMessages>([])
     const [loading, setLoading] = useState(true)
-
-    // Poll for updates
-    useEffect(() => {
-        loadConversations()
-        const interval = setInterval(loadConversations, 10000) // Poll every 10s
-        return () => clearInterval(interval)
-    }, [])
-
-    useEffect(() => {
-        if (selectedUserId) {
-            loadMessages(selectedUserId)
-            // Mark as read immediately
-            markAdminRead(selectedUserId)
-        }
-    }, [selectedUserId])
 
     const loadConversations = async () => {
         const data = await getAllConversations()
@@ -48,6 +35,22 @@ export function SupportInbox({ onClose }: { onClose: () => void }) {
         const msgs = await getConversation(userId)
         setActiveMessages(msgs)
     }
+
+    // Poll for updates. Deferred to a microtask so the setState calls inside
+    // loadConversations don't run synchronously within the effect.
+    useEffect(() => {
+        queueMicrotask(() => { loadConversations() })
+        const interval = setInterval(loadConversations, 10000) // Poll every 10s
+        return () => clearInterval(interval)
+    }, [])
+
+    useEffect(() => {
+        if (selectedUserId) {
+            queueMicrotask(() => { loadMessages(selectedUserId) })
+            // Mark as read immediately
+            markAdminRead(selectedUserId)
+        }
+    }, [selectedUserId])
 
     const handleSendMessage = async (content: string) => {
         if (!selectedUserId) return

@@ -20,7 +20,10 @@ export type LessonNode = {
     // Computed / Joined
     is_completed: boolean
     children?: LessonNode[]
-    homework_progress?: any
+    homework_progress?: {
+        points_awarded: number | null
+        submission_id: string
+    } | null
     gained_xp: number
 }
 

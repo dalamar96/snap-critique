@@ -42,7 +42,7 @@ export default async function Home() {
           </h1>
           
           <p className="text-base md:text-lg text-slate-400 font-mono border-l-2 border-primary/30 pl-4 py-1">
-            Because "looks fine" isn't a plan. Get professional-grade feedback instantly.
+            Because &quot;looks fine&quot; isn&apos;t a plan. Get professional-grade feedback instantly.
           </p>
 
           {!user && (
@@ -54,7 +54,7 @@ export default async function Home() {
           )}
 
           <p className="text-xs md:text-sm text-slate-500 font-mono">
-             Upload your photo. Tell us your intent. We'll handle the rest.
+             Upload your photo. Tell us your intent. We&apos;ll handle the rest.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 text-[10px] sm:text-xs text-slate-400 font-mono uppercase tracking-wider pt-2">

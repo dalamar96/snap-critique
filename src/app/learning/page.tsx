@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getLearningTree, getUserTotalLearningPoints, LessonNode } from './actions'
+import { getLearningTree, getUserTotalLearningPoints } from './actions'
 import { LearningDashboardClient } from './dashboard-client'
 
 export default async function LearningPage() {

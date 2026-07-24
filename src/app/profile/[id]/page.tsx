@@ -1,10 +1,19 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { getIsAdmin } from '@/lib/auth/require-admin'
-import { notFound, redirect } from 'next/navigation'
-import { Globe, Shield, Camera, Link as LinkIcon, MapPin, Grid, User, Zap } from 'lucide-react'
+import { notFound } from 'next/navigation'
+import { Camera, Link as LinkIcon, Grid, User, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { GalleryItem } from '@/app/gallery/gallery-item'
+
+interface ProfileGalleryAnalysisRow {
+    id: string
+    title: string
+    score: number
+    submission_id: string
+    full_critique: { nsfw_score?: number; ai_generated_score?: number } | null
+    submissions: { id: string; image_path: string | null; deleted_at: string | null } | null
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -73,7 +82,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
     // Generate Signed URLs
     const galleryItems = await Promise.all(
-        (analyses || []).map(async (item: any) => {
+        ((analyses || []) as unknown as ProfileGalleryAnalysisRow[]).map(async (item) => {
             let imageUrl = '/placeholder.png'
             if (item.submissions?.image_path) {
                  const previewPath = item.submissions.image_path.replace('uploads/', 'previews/')

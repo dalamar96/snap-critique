@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { WizardState, UserGoal, PhotographyCategory } from '@/types/wizard'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { ChevronRight, ChevronLeft, Check, Camera, Lightbulb, User, Terminal } from 'lucide-react'
+import { Camera, Lightbulb, User, Terminal } from 'lucide-react'
 
 // Steps: 0 = Upload (handled locally or passed in), 1 = Category, 2 = Goals, 3 = Context
 

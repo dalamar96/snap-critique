@@ -92,7 +92,7 @@ export async function getConversationStatus() {
             .single()
 
         return data?.status || 'open'
-    } catch (e) {
+    } catch {
         return 'open'
     }
 }

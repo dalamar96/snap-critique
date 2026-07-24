@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Terminal, Clock, CheckCircle, AlertCircle, FileImage, LayoutDashboard, Globe } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { AlertCircle, FileImage, LayoutDashboard } from 'lucide-react'
 import { DashboardPublicToggle } from '@/components/dashboard-public-toggle'
 import { getProgressData } from './progress-data'
 import { ProgressSection } from './progress/progress-section'
@@ -156,7 +155,7 @@ export default async function DashboardPage() {
                               {sub.status === 'error' && <span className="text-[10px] bg-red-900/30 text-red-500 px-2 py-0.5 border border-red-900 uppercase whitespace-nowrap">Failed</span>}
                            </div>
                            <p className="text-slate-500 text-xs uppercase truncate">
-                              {new Date(sub.created_at).toLocaleDateString()} // {sub.category}
+                              {`${new Date(sub.created_at).toLocaleDateString()} // ${sub.category}`}
                            </p>
                         </div>
 
