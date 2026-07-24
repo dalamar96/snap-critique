@@ -126,15 +126,15 @@ export default async function DashboardPage() {
           </div>
 
           {/* Grid */}
-          <div className="grid gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
              {/* CTA Card */}
-             <Link href="/" className="group flex items-center gap-3 min-w-0 bg-primary/5 border border-dashed border-primary/30 hover:bg-primary/10 hover:border-primary transition-all px-4 py-3">
-                <div className="w-9 h-9 shrink-0 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                   <div className="text-lg text-primary font-bold leading-none">+</div>
+             <Link href="/" className="group flex flex-col items-center justify-center gap-2 aspect-square min-w-0 bg-primary/5 border border-dashed border-primary/30 hover:bg-primary/10 hover:border-primary transition-all rounded-lg p-4 text-center">
+                <div className="w-10 h-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                   <div className="text-xl text-primary font-bold leading-none">+</div>
                 </div>
-                <div className="text-left min-w-0">
-                   <h3 className="text-white font-bold text-sm uppercase tracking-wider group-hover:text-primary transition-colors truncate">Analyze New Image</h3>
-                   <p className="text-slate-500 text-[10px] uppercase">Get instant feedback</p>
+                <div className="min-w-0">
+                   <h3 className="text-white font-bold text-xs uppercase tracking-wider group-hover:text-primary transition-colors">Analyze New</h3>
+                   <p className="text-slate-500 text-[9px] uppercase mt-0.5">Get feedback</p>
                 </div>
              </Link>
 
@@ -145,61 +145,65 @@ export default async function DashboardPage() {
                   return (
                   <div
                      key={sub.id}
-                     className="group relative flex items-center gap-3 md:gap-4 min-w-0 bg-black border border-white/10 hover:border-primary/50 transition-colors px-3 py-2.5 md:px-4"
+                     className="group relative flex flex-col min-w-0 bg-black border border-white/10 hover:border-primary/50 transition-colors rounded-lg overflow-hidden"
                   >
                      {/* Overlay Link covers the whole card except where pointer-events are auto */}
-                     <Link href={`/analysis/${sub.id}`} className="absolute inset-0 z-0" />
+                     <Link href={`/analysis/${sub.id}`} className="absolute inset-0 z-10" />
 
                      {/* Thumbnail */}
-                     <div className="w-11 h-11 md:w-12 md:h-12 bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative rounded-md z-10 pointer-events-none">
+                     <div className="relative aspect-square bg-white/5 flex items-center justify-center overflow-hidden pointer-events-none">
                         {sub.thumbnailUrl ? (
                             <img
                               src={sub.thumbnailUrl}
                               alt="Thumbnail"
-                              className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                              className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                             />
                         ) : (
-                            <FileImage className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
+                            <FileImage className="w-8 h-8 text-slate-500 group-hover:text-primary transition-colors" />
                         )}
+
+                        {/* Score badge */}
+                        <div className={`absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-md px-1.5 py-0.5 text-sm font-bold ${scoreColor(analysis?.score)}`}>
+                           {analysis?.score ?? '--'}
+                        </div>
+
+                        {/* Homework badge */}
+                        {sub.lesson_id && (
+                           <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm rounded-md p-1" title="Homework assignment">
+                              <GraduationCap className="w-3.5 h-3.5 text-primary" />
+                           </div>
+                        )}
+
+                        {/* Status overlay */}
                         {sub.status === 'processing' && (
                             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                                <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
+                            </div>
+                        )}
+                        {sub.status === 'error' && (
+                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-1">
+                                <AlertCircle className="w-6 h-6 text-red-500" />
+                                <span className="text-[9px] uppercase font-bold text-red-500">Failed</span>
                             </div>
                         )}
                      </div>
 
                      {/* Info */}
-                     <div className="flex-1 min-w-0 relative z-10 pointer-events-none">
-                        <div className="flex items-center gap-1.5">
-                           <h3 className="text-white font-bold text-sm truncate group-hover:text-primary transition-colors">
-                              {analysis?.title || 'Unknown Subject'}
-                           </h3>
-                           {sub.lesson_id && (
-                              <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" aria-label="Homework assignment" />
-                           )}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase tracking-wide mt-0.5 truncate">
-                           <CategoryIcon className="w-3 h-3 shrink-0" />
+                     <div className="p-2.5 min-w-0 pointer-events-none">
+                        <h3 className="text-white font-bold text-xs truncate group-hover:text-primary transition-colors">
+                           {analysis?.title || 'Unknown Subject'}
+                        </h3>
+                        <div className="flex items-center gap-1 text-[9px] text-slate-500 uppercase tracking-wide mt-0.5 truncate">
+                           <CategoryIcon className="w-2.5 h-2.5 shrink-0" />
                            <span className="truncate">{sub.category}</span>
                            <span className="text-slate-700">&bull;</span>
                            <span className="truncate">{formatDistanceToNow(new Date(sub.created_at), { addSuffix: true })}</span>
-                           {sub.status === 'error' && (
-                              <>
-                                 <span className="text-slate-700">&bull;</span>
-                                 <span className="text-red-500 font-bold">Failed</span>
-                              </>
-                           )}
                         </div>
-                     </div>
-
-                     {/* Score */}
-                     <div className={`shrink-0 text-right relative z-10 pointer-events-none w-9 md:w-11 text-xl md:text-2xl font-bold ${scoreColor(analysis?.score)}`}>
-                        {analysis?.score ?? '--'}
                      </div>
 
                      {/* Actions */}
                      {sub.status === 'done' && (
-                        <div className="shrink-0 relative z-10 pointer-events-auto">
+                        <div className="relative z-20 pointer-events-auto flex justify-end px-2.5 pb-2.5 pt-1 border-t border-white/5">
                            <DashboardPublicToggle
                                 submissionId={sub.id}
                                 initialIsPublic={!!analysis?.is_public}
@@ -210,7 +214,7 @@ export default async function DashboardPage() {
                   </div>
                )})
              ) : (
-                <div className="text-center py-20 border border-dashed border-white/10">
+                <div className="col-span-full text-center py-20 border border-dashed border-white/10">
                    <AlertCircle className="w-12 h-12 text-slate-500 mx-auto mb-4" />
                    <h3 className="text-white font-bold uppercase mb-2">No Critiques Found</h3>
                    <Link href="/" className="text-primary hover:underline text-xs uppercase tracking-widest">
