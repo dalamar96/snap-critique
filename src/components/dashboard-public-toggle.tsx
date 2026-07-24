@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { togglePublicStatus, deleteSubmission } from '@/app/analysis/actions'
 import { toast } from 'sonner'
-import { Globe, Lock, Trash2, Loader2 } from 'lucide-react'
+import { Globe, Lock, Trash2, Loader2, Share2 } from 'lucide-react'
 import { ShareAnalysisDialog } from '@/components/share-analysis-dialog'
 import {
   AlertDialog,
@@ -21,9 +21,10 @@ import {
 interface DashboardPublicToggleProps {
   submissionId: string
   initialIsPublic: boolean
+  compact?: boolean
 }
 
-export function DashboardPublicToggle({ submissionId, initialIsPublic }: DashboardPublicToggleProps) {
+export function DashboardPublicToggle({ submissionId, initialIsPublic, compact = false }: DashboardPublicToggleProps) {
   const [isPublic, setIsPublic] = useState(initialIsPublic)
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -67,6 +68,57 @@ export function DashboardPublicToggle({ submissionId, initialIsPublic }: Dashboa
   }
 
   if (isDeleted) return null
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+          {isPublic && (
+              <ShareAnalysisDialog
+                 submissionId={submissionId}
+                 initialIsPublic={isPublic}
+                 trigger={
+                     <button className="text-slate-500 hover:text-primary transition-colors" title="Get share link">
+                         <Share2 className="w-3.5 h-3.5" />
+                     </button>
+                 }
+              />
+          )}
+          <button
+             onClick={() => handleToggle(!isPublic)}
+             disabled={isLoading}
+             title={isPublic ? 'Public — click to make private' : 'Private — click to make public'}
+             className="text-slate-500 hover:text-white transition-colors disabled:opacity-50"
+          >
+              {isLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : isPublic ? (
+                  <Globe className="w-3.5 h-3.5 text-sky-500" />
+              ) : (
+                  <Lock className="w-3.5 h-3.5" />
+              )}
+          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="text-slate-600 hover:text-red-500 transition-colors" disabled={isDeleting} title="Delete">
+                  {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-slate-950 border border-white/10 text-white">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription className="text-slate-400">
+                  This will delete the analysis. It will no longer be visible to anyone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-transparent border border-white/20 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white border-none">Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
