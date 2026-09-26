@@ -23,7 +23,7 @@ vi.mock('next/cache', () => ({
     revalidatePath: vi.fn(),
 }))
 
-import { deleteAccount } from './actions'
+import { deleteAccount, setMarketingEmails } from './actions'
 
 function formData(fields: Record<string, string>) {
     const fd = new FormData()
@@ -108,5 +108,50 @@ describe('deleteAccount', () => {
 
         expect(result.error).toMatch(/went wrong finalizing/i)
         expect(mockUserClient.auth.signOut).not.toHaveBeenCalled()
+    })
+})
+
+describe('setMarketingEmails', () => {
+    beforeEach(() => {
+        mockUserClient.auth.getUser.mockReset()
+    })
+
+    it('returns Unauthorized when there is no logged-in user', async () => {
+        mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: null } })
+
+        expect(await setMarketingEmails(true)).toEqual({ error: 'Unauthorized' })
+    })
+
+    it('opting out sets the flag and a timestamp on the current user profile only', async () => {
+        mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } })
+        const builder = makeQueryBuilder({ data: null, error: null })
+        Object.assign(mockAdminClient, makeFakeSupabase({ from: () => builder }))
+
+        expect(await setMarketingEmails(false)).toEqual({ success: true })
+
+        expect(builder.update).toHaveBeenCalledWith({
+            marketing_opt_out: true,
+            marketing_opt_out_at: expect.any(String),
+        })
+        expect(builder.eq).toHaveBeenCalledWith('id', 'user-1')
+    })
+
+    it('opting back in clears the flag and timestamp', async () => {
+        mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } })
+        const builder = makeQueryBuilder({ data: null, error: null })
+        Object.assign(mockAdminClient, makeFakeSupabase({ from: () => builder }))
+
+        await setMarketingEmails(true)
+
+        expect(builder.update).toHaveBeenCalledWith({ marketing_opt_out: false, marketing_opt_out_at: null })
+    })
+
+    it('surfaces a database error', async () => {
+        mockUserClient.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } })
+        Object.assign(mockAdminClient, makeFakeSupabase({
+            from: () => makeQueryBuilder({ data: null, error: { message: 'db down' } }),
+        }))
+
+        expect(await setMarketingEmails(true)).toEqual({ error: 'db down' })
     })
 })

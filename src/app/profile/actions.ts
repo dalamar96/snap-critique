@@ -158,3 +158,30 @@ export async function deleteAccount(formData: FormData) {
     await supabase.auth.signOut()
     return { success: true }
 }
+
+/**
+ * Lets the signed-in user opt in or out of reminder/marketing email from
+ * their profile. The mirror of the emailed unsubscribe link: `enabled: false`
+ * sets marketing_opt_out (with a timestamp); `enabled: true` clears both, so
+ * the admin reminder tools may email them again.
+ */
+export async function setMarketingEmails(enabled: boolean) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Unauthorized' }
+
+    const adminDb = createAdminClient()
+    const { error } = await adminDb
+        .from('profiles')
+        .update({
+            marketing_opt_out: !enabled,
+            marketing_opt_out_at: enabled ? null : new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/profile/edit')
+    return { success: true }
+}

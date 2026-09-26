@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { ProfileForm } from './profile-form'
 import { DangerZone } from './danger-zone'
+import { EmailPreferences } from './email-preferences'
 
 export default async function ProfileEditPage() {
   const supabase = await createClient()
@@ -45,6 +46,8 @@ export default async function ProfileEditPage() {
             availableBrands={brands}
             availableTypes={types}
          />
+
+         <EmailPreferences initialEnabled={!profile?.marketing_opt_out} />
 
          <DangerZone />
       </div>
