@@ -8,7 +8,8 @@ import {
 } from 'lucide-react'
 import { DashboardPublicToggle } from '@/components/dashboard-public-toggle'
 import { getProgressData } from './progress-data'
-import { ProgressSection } from './progress/progress-section'
+import { signPreviewUrls } from '@/lib/signed-urls'
+import { LazyProgressSection } from './progress/progress-section-lazy'
 
 const CATEGORY_ICONS: Record<string, typeof User> = {
   portrait: User,
@@ -41,10 +42,11 @@ export default async function DashboardPage() {
   const [submissionsRel, profileRel, progressData] = await Promise.all([
       supabase
         .from('submissions')
-        .select('*, analyses(id, title, score, is_public)')
+        .select('id, created_at, category, status, lesson_id, image_path, thumbnail_path, analyses(id, title, score, is_public)')
         .eq('user_id', user.id)
         .is('deleted_at', null)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .limit(100),
       supabase
         .from('profiles')
         .select('credits_balance')
@@ -56,37 +58,14 @@ export default async function DashboardPage() {
   const submissions = submissionsRel.data
   const profile = profileRel.data
 
-  // Enhance submissions with signed URLs for thumbnails
-  const submissionsWithImages = submissions ? await Promise.all(submissions.map(async (sub) => {
-      let imageUrl = null
-
-      if (sub.image_path) {
-          // 1. Try Preview Path first
-          // Use stored thumbnail_path if available, otherwise fallback to convention
-          const previewPath = sub.thumbnail_path || sub.image_path.replace('uploads/', 'previews/')
-          const { data: previewData } = await supabase.storage
-            .from('submissions')
-            .createSignedUrl(previewPath, 3600)
-          
-          if (previewData?.signedUrl) {
-              imageUrl = previewData.signedUrl
-          } else {
-              // 2. Fallback to Original
-              const { data: originalData } = await supabase.storage
-                .from('submissions')
-                .createSignedUrl(sub.image_path, 3600)
-              
-              if (originalData?.signedUrl) {
-                  imageUrl = originalData.signedUrl
-              }
-          }
-      }
-
-      return {
-          ...sub,
-          thumbnailUrl: imageUrl
-      }
-  })) : []
+  // Enhance submissions with signed URLs (batched: 2 requests total)
+  const subs = submissions ?? []
+  const thumbUrls = await signPreviewUrls(supabase, subs, (sub) => ({
+    // Use stored thumbnail_path if available, otherwise fallback to convention
+    preview: sub.image_path ? (sub.thumbnail_path || sub.image_path.replace('uploads/', 'previews/')) : null,
+    original: sub.image_path ?? null,
+  }))
+  const submissionsWithImages = subs.map((sub, i) => ({ ...sub, thumbnailUrl: thumbUrls[i] }))
 
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-8 md:p-12 font-mono w-full max-w-[100vw] overflow-x-hidden">
@@ -122,7 +101,7 @@ export default async function DashboardPage() {
 
           {/* Progress */}
           <div className="mb-8 md:mb-12">
-             <ProgressSection data={progressData} />
+             <LazyProgressSection data={progressData} />
           </div>
 
           {/* Grid */}

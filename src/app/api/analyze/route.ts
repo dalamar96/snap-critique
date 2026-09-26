@@ -76,27 +76,33 @@ export async function POST(req: NextRequest) {
         }
 
 
-        // 1. Download image from Supabase Storage (Prefer Preview)
+        // 1. Fetch the preview, the original (EXIF lives only there — the
+        // preview strips it) and the lesson row concurrently. They're
+        // independent, so this costs one round-trip instead of three, and a
+        // missing preview no longer triggers a second download of the original.
         const previewPath = imagePath.replace('uploads/', 'previews/');
+        const bucket = supabase.storage.from('submissions');
 
-        // Try downloading preview first
-        let fileData, downloadError;
+        const [previewResult, originalResult, lessonResult] = await Promise.all([
+            bucket.download(previewPath),
+            previewPath !== imagePath ? bucket.download(imagePath) : Promise.resolve(null),
+            lessonId
+                ? supabase.from('lessons').select('id, title, learning_goals').eq('id', lessonId).single()
+                : Promise.resolve({ data: null }),
+        ]);
 
-        ({ data: fileData, error: downloadError } = await supabase
-            .storage
-            .from('submissions')
-            .download(previewPath));
+        const previewData = previewResult.error ? null : previewResult.data;
+        const originalData = originalResult && !originalResult.error ? originalResult.data : null;
 
-        // Fallback to original if preview missing
-        if (downloadError) {
+        if (!previewData) {
             Logger.info("Preview not found, falling back to original:", { imagePath });
-            ({ data: fileData, error: downloadError } = await supabase
-                .storage
-                .from('submissions')
-                .download(imagePath));
         }
 
-        if (downloadError || !fileData) {
+        // Prefer the (smaller) preview for Gemini; fall back to the original.
+        const fileData = previewData ?? originalData;
+        const downloadError = previewResult.error && (originalResult?.error ?? previewResult.error);
+
+        if (!fileData) {
             Logger.error('Download error:', downloadError, { imagePath });
             await refundCreditIfDeducted();
             await cleanupFiles(supabase, imagePath);
@@ -107,20 +113,11 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await fileData.arrayBuffer();
         const base64Image = Buffer.from(arrayBuffer).toString('base64');
 
-        // 2a. Download ORIGINAL for EXIF (since preview strips it)
-        let originalBuffer = arrayBuffer;
-        if (imagePath.includes('uploads/')) {
-            if (previewPath !== imagePath && !downloadError) {
-                const { data: originalData, error: originalErr } = await supabase
-                    .storage
-                    .from('submissions')
-                    .download(imagePath)
-
-                if (originalData && !originalErr) {
-                    originalBuffer = await originalData.arrayBuffer()
-                }
-            }
-        }
+        // 2a. Original bytes for EXIF (reuse the already-read buffer when the
+        // original was the file sent to Gemini).
+        const originalBuffer = originalData
+            ? (originalData === fileData ? arrayBuffer : await originalData.arrayBuffer())
+            : arrayBuffer;
 
         // 2a. Extract EXIF Metadata
         interface ExifData {
@@ -176,7 +173,7 @@ export async function POST(req: NextRequest) {
         let lessonData = null;
 
         if (lessonId) {
-            const { data: fetchedLesson } = await supabase.from('lessons').select('*').eq('id', lessonId).single();
+            const fetchedLesson = lessonResult.data as { title: string; learning_goals: string | null } | null;
             if (fetchedLesson) {
                 lessonData = fetchedLesson;
                 homeworkContext = `

@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { signPreviewUrls } from '@/lib/signed-urls'
 import Link from 'next/link'
 import { Camera, Search } from 'lucide-react'
 import { GalleryItem } from './gallery-item'
@@ -40,40 +41,21 @@ export default async function GalleryPage() {
     .eq('is_public', true)
     .is('submissions.deleted_at', null)
     .order('created_at', { ascending: false })
+    // Cap the payload: unbounded lists + signing scale linearly with content.
+    .limit(60)
 
-  // Generate Signed URLs for all images
-  // Note: For a real production app with thousands of images, you'd want a more scalable solution 
-  // (e.g. public bucket or CDN), but for this scale, batch signed URLs works well.
-  
-  const galleryItems = await Promise.all(
-    ((analyses || []) as unknown as GalleryAnalysisRow[]).map(async (item) => {
-        let imageUrl = '/placeholder.png'
-        if (item.submissions?.image_path) {
-             const previewPath = item.submissions.image_path.replace('uploads/', 'previews/')
-             
-             // Try preview first
-             const { data: previewData } = await supabase.storage
-                .from('submissions')
-                .createSignedUrl(previewPath, 3600)
-            
-             if (previewData?.signedUrl) {
-                 imageUrl = previewData.signedUrl
-             } else {
-                 // Fallback to original
-                 const { data: originalData } = await supabase.storage
-                    .from('submissions')
-                    .createSignedUrl(item.submissions.image_path, 3600)
-                 if (originalData?.signedUrl) imageUrl = originalData.signedUrl
-             }
-        }
+  // Batch-sign all preview URLs (2 requests total instead of 1-2 per image).
+  const rows = (analyses || []) as unknown as GalleryAnalysisRow[]
+  const urls = await signPreviewUrls(supabase, rows, (item) => {
+    const original = item.submissions?.image_path ?? null
+    return { preview: original ? original.replace('uploads/', 'previews/') : null, original }
+  })
 
-        return {
-            ...item,
-            imageUrl,
-            nsfw_score: item.full_critique?.nsfw_score // Extract from JSONB
-        }
-    })
-  )
+  const galleryItems = rows.map((item, i) => ({
+    ...item,
+    imageUrl: urls[i] ?? '/placeholder.png',
+    nsfw_score: item.full_critique?.nsfw_score, // Extract from JSONB
+  }))
 
   const jsonLd = {
     '@context': 'https://schema.org',

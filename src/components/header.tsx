@@ -1,12 +1,33 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { Camera, LogOut, User, LayoutDashboard, Database, LifeBuoy, BookOpen, Info, Compass, Users } from 'lucide-react'
 import { signout } from '@/app/auth/actions'
 import { MobileNav } from './mobile-nav'
 
-export async function Header() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+// Client component on purpose: reading the session server-side here (cookies())
+// made every route in the app dynamic, defeating static rendering and the
+// `revalidate` settings on /gallery and /community. getSession() reads the
+// local cookie with no network call; this is display-only, and every
+// protected page/action still verifies the user server-side.
+export function Header() {
+  const [user, setUser] = useState<{ id: string } | null>(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ? { id: session.user.id } : null)
+      setReady(true)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? { id: session.user.id } : null)
+      setReady(true)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   return (
     <header className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50 pointer-events: none;">
@@ -23,7 +44,7 @@ export async function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className={`hidden md:flex items-center gap-6 transition-opacity ${ready ? 'opacity-100' : 'opacity-0'}`}>
             {!user && (
                 <>
                      <Link href="/about" className="text-sm font-mono text-slate-400 hover:text-[#FF7A00] flex items-center gap-2 uppercase tracking-wider transition-colors">
@@ -82,7 +103,7 @@ export async function Header() {
         </nav>
 
         {/* Mobile Nav */}
-        <MobileNav user={user} />
+        <MobileNav user={ready ? user : null} />
       </div>
     </header>
   )

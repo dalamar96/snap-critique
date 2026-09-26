@@ -61,7 +61,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function ResultsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ claim?: string }> }) {
-  console.log("Rendering ResultsPage")
   const { id } = await params
   
   const supabase = createAdminClient()

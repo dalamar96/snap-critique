@@ -6,7 +6,6 @@ import { completeLesson } from '../actions'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import confetti from 'canvas-confetti'
 import { HomeworkUpload } from '../homework-upload'
 import { LessonNode } from '../actions'
 
@@ -23,11 +22,10 @@ export function LessonViewClient({ lesson, userCredits }: { lesson: LessonNode, 
             try {
                 await completeLesson(lesson.id)
                 setIsCompleted(true)
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                })
+                // Loaded on demand — only needed at the moment of completion.
+                void import('canvas-confetti').then(({ default: confetti }) =>
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } })
+                )
                 router.refresh()
             } catch (error) {
                 console.error("Failed to complete", error)

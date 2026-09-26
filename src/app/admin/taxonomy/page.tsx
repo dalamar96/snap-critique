@@ -1,10 +1,20 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
+import { getIsAdmin } from '@/lib/auth/require-admin'
+import { notFound, redirect } from 'next/navigation'
 import { addBrand, deleteBrand, addType } from './actions'
 import { Trash2, Plus } from 'lucide-react'
 import { TaxonomyTree } from './taxonomy-tree'
 
+export const dynamic = 'force-dynamic'
+
 export default async function TaxonomyPage() {
+  const authClient = await createClient()
+  const { data: { user } } = await authClient.auth.getUser()
+  if (!user) redirect('/login')
+
   const supabase = createAdminClient()
+  if (!(await getIsAdmin(supabase, user.id))) notFound()
 
   const [brandsResult, typesResult] = await Promise.all([
       supabase.from('camera_brands').select('*').order('name'),

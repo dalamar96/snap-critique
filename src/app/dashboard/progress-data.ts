@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -418,6 +419,45 @@ function toRow(s: SubmissionJoinRow): ProgressRow {
     }
 }
 
+// Peer benchmark data is identical for every user and changes slowly, so it is
+// computed in SQL (category_score_averages, see
+// supabase/migrations/20260926000000_performance_indexes.sql) and cached for
+// an hour instead of scanning every submission on each dashboard load.
+const getGlobalCategoryAverages = unstable_cache(
+    async (): Promise<{ category: string; averageScore: number }[]> => {
+        const adminDb = createAdminClient()
+        const { data, error } = await adminDb.rpc('category_score_averages')
+        if (!error && data) {
+            return (data as { category: string; average_score: number | string }[]).map((r) => ({
+                category: r.category,
+                averageScore: Number(r.average_score),
+            }))
+        }
+
+        // Fallback if the migration hasn't been applied yet: original full scan.
+        const { data: globalSubmissions } = await adminDb
+            .from('submissions')
+            .select('category, analyses(score)')
+            .eq('status', 'done')
+            .is('deleted_at', null)
+
+        const globalGroups = new Map<string, number[]>()
+        for (const s of (globalSubmissions ?? []) as unknown as { category: string | null; analyses: { score: number | null }[] | { score: number | null } | null }[]) {
+            const analysis = Array.isArray(s.analyses) ? s.analyses[0] : s.analyses
+            if (!s.category || analysis?.score == null) continue
+            const arr = globalGroups.get(s.category) ?? []
+            arr.push(analysis.score)
+            globalGroups.set(s.category, arr)
+        }
+        return Array.from(globalGroups.entries()).map(([category, scores]) => ({
+            category,
+            averageScore: average(scores),
+        }))
+    },
+    ['global-category-averages'],
+    { revalidate: 3600 }
+)
+
 export async function getProgressData(supabase: SupabaseClient, userId: string): Promise<ProgressData> {
     const { data: submissions } = await supabase
         .from('submissions')
@@ -447,25 +487,7 @@ export async function getProgressData(supabase: SupabaseClient, userId: string):
     // otherwise scope to just this user — deliberate, server-side-only use
     // of the admin client. Only aggregate (category, score) pairs are read;
     // no individual row is ever returned to the client.
-    const adminDb = createAdminClient()
-    const { data: globalSubmissions } = await adminDb
-        .from('submissions')
-        .select('category, analyses(score)')
-        .eq('status', 'done')
-        .is('deleted_at', null)
-
-    const globalGroups = new Map<string, number[]>()
-    for (const s of (globalSubmissions ?? []) as unknown as { category: string | null; analyses: { score: number | null }[] | { score: number | null } | null }[]) {
-        const analysis = Array.isArray(s.analyses) ? s.analyses[0] : s.analyses
-        if (!s.category || analysis?.score == null) continue
-        const arr = globalGroups.get(s.category) ?? []
-        arr.push(analysis.score)
-        globalGroups.set(s.category, arr)
-    }
-    const globalBreakdown = Array.from(globalGroups.entries()).map(([category, scores]) => ({
-        category,
-        averageScore: average(scores),
-    }))
+    const globalBreakdown = await getGlobalCategoryAverages()
 
     const categoryBreakdown = buildCategoryBreakdown(rows)
 

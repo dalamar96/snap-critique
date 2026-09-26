@@ -300,8 +300,12 @@ describe('comparePeerBenchmark', () => {
 describe('getProgressData', () => {
     it('fetches, aggregates, and shapes progress data end-to-end against a fake Supabase client', async () => {
         vi.resetModules()
+        // unstable_cache needs Next's runtime; pass through in unit tests.
+        vi.doMock('next/cache', () => ({ unstable_cache: <T extends (...a: never[]) => unknown>(fn: T) => fn }))
         vi.doMock('@/lib/supabase/admin', () => ({
             createAdminClient: () => ({
+                // Peer benchmark comes from the category_score_averages RPC.
+                rpc: () => Promise.resolve({ data: [{ category: 'portrait', average_score: 65 }], error: null }),
                 from: (table: string) => {
                     if (table === 'submissions') {
                         return {

@@ -1,3 +1,4 @@
+import { signPaths } from '@/lib/signed-urls'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import { Users, User, ArrowRight } from 'lucide-react'
@@ -18,18 +19,17 @@ export default async function CommunityPage() {
         .select('*')
         .eq('is_public', true)
         .order('created_at', { ascending: false })
+        .limit(100)
     
-    // Process Avatars
-    const profilesWithAvatars = await Promise.all(
-        (profiles || []).map(async (profile) => {
-             let avatarSrc = profile.avatar_url
-             if (profile.avatar_url && !profile.avatar_url.startsWith('http')) {
-                 const { data } = await supabase.storage.from('submissions').createSignedUrl(profile.avatar_url, 3600)
-                 if (data?.signedUrl) avatarSrc = data.signedUrl
-             }
-             return { ...profile, avatarSrc }
-        })
-    )
+    // Process Avatars (one batched signing request)
+    const avatarPaths = (profiles || [])
+        .map((p) => p.avatar_url as string | null)
+        .filter((u): u is string => !!u && !u.startsWith('http'))
+    const signedAvatars = await signPaths(supabase, avatarPaths)
+    const profilesWithAvatars = (profiles || []).map((profile) => ({
+        ...profile,
+        avatarSrc: signedAvatars.get(profile.avatar_url) ?? profile.avatar_url,
+    }))
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200">

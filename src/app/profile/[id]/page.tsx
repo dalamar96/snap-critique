@@ -1,3 +1,4 @@
+import { signPreviewUrls } from '@/lib/signed-urls'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { getIsAdmin } from '@/lib/auth/require-admin'
@@ -79,28 +80,20 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         .eq('is_public', true)
         .is('submissions.deleted_at', null)
         .order('created_at', { ascending: false })
+        .limit(60)
 
-    // Generate Signed URLs
-    const galleryItems = await Promise.all(
-        ((analyses || []) as unknown as ProfileGalleryAnalysisRow[]).map(async (item) => {
-            let imageUrl = '/placeholder.png'
-            if (item.submissions?.image_path) {
-                 const previewPath = item.submissions.image_path.replace('uploads/', 'previews/')
-                 const { data: previewData } = await supabase.storage.from('submissions').createSignedUrl(previewPath, 3600)
-                 if (previewData?.signedUrl) imageUrl = previewData.signedUrl
-                 else {
-                     const { data: orig } = await supabase.storage.from('submissions').createSignedUrl(item.submissions.image_path, 3600)
-                     if (orig?.signedUrl) imageUrl = orig.signedUrl
-                 }
-            }
-            return {
-                ...item,
-                imageUrl,
-                nsfw_score: item.full_critique?.nsfw_score,
-                ai_generated_score: item.full_critique?.ai_generated_score
-            }
-        })
-    )
+    // Generate Signed URLs (batched)
+    const profileRows = (analyses || []) as unknown as ProfileGalleryAnalysisRow[]
+    const profileUrls = await signPreviewUrls(supabase, profileRows, (item) => {
+        const original = item.submissions?.image_path ?? null
+        return { preview: original ? original.replace('uploads/', 'previews/') : null, original }
+    })
+    const galleryItems = profileRows.map((item, i) => ({
+        ...item,
+        imageUrl: profileUrls[i] ?? '/placeholder.png',
+        nsfw_score: item.full_critique?.nsfw_score,
+        ai_generated_score: item.full_critique?.ai_generated_score
+    }))
 
     // Avatar Signed URL (if private bucket)
     // We stored path in avatar_url. 

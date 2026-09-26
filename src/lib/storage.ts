@@ -14,22 +14,17 @@ export async function uploadImage(file: File): Promise<string | null> {
         // 1. Generate Preview
         const previewBlob = await createPreviewImage(file);
 
-        // 2. Upload Original
-        const { error: originalError } = await supabase.storage
-            .from('submissions')
-            .upload(originalPath, file)
+        // 2. Upload original and preview concurrently
+        const [originalResult, previewResult] = await Promise.all([
+            supabase.storage.from('submissions').upload(originalPath, file),
+            supabase.storage.from('submissions').upload(previewPath, previewBlob),
+        ])
 
-        if (originalError) throw originalError;
+        if (originalResult.error) throw originalResult.error;
 
-        // 3. Upload Preview
-        const { error: previewError } = await supabase.storage
-            .from('submissions')
-            .upload(previewPath, previewBlob)
-
-        if (previewError) {
-            console.warn('Preview upload failed, but original succeeded:', previewError);
-            // We continue even if preview fails fallback to original? 
-            // Ideally we want both. But if preview fails, we might just use original.
+        if (previewResult.error) {
+            // Non-fatal: the analyze route falls back to the original.
+            console.warn('Preview upload failed, but original succeeded:', previewResult.error);
         }
 
         return originalPath;

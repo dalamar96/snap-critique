@@ -1,10 +1,10 @@
 'use server'
 
-import { createAdminClient } from "@/lib/supabase/admin"
+import { requireAdmin } from "@/lib/auth/require-admin"
 import { revalidatePath } from "next/cache"
 
 export async function addBrand(name: string) {
-    const supabase = createAdminClient()
+    const { adminDb: supabase } = await requireAdmin()
     const { error } = await supabase.from('camera_brands').insert({ name })
     if (error) return { error: error.message }
     revalidatePath('/admin/taxonomy')
@@ -12,7 +12,7 @@ export async function addBrand(name: string) {
 }
 
 export async function deleteBrand(id: string) {
-    const supabase = createAdminClient()
+    const { adminDb: supabase } = await requireAdmin()
     const { error } = await supabase.from('camera_brands').delete().eq('id', id)
     if (error) return { error: error.message }
     revalidatePath('/admin/taxonomy')
@@ -20,7 +20,7 @@ export async function deleteBrand(id: string) {
 }
 
 export async function addType(name: string, parentId?: string) {
-    const supabase = createAdminClient()
+    const { adminDb: supabase } = await requireAdmin()
     const { error } = await supabase.from('photography_types').insert({
         name,
         parent_id: parentId || null
@@ -32,14 +32,14 @@ export async function addType(name: string, parentId?: string) {
 }
 
 export async function deleteType(id: string) {
-    const supabase = createAdminClient()
+    const { adminDb: supabase } = await requireAdmin()
     const { error } = await supabase.from('photography_types').delete().eq('id', id)
     if (error) return { error: error.message }
     revalidatePath('/admin/taxonomy')
     return { success: true }
 }
 export async function seedHierarchy() {
-    const supabase = createAdminClient()
+    const { adminDb: supabase } = await requireAdmin()
 
     // 1. Clear existing
     await supabase.from('photography_types').delete().neq('name', '___') // Delete all
