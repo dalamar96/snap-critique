@@ -10,6 +10,8 @@ import { DashboardPublicToggle } from '@/components/dashboard-public-toggle'
 import { getProgressData } from './progress-data'
 import { signPreviewUrls } from '@/lib/signed-urls'
 import { LazyProgressSection } from './progress/progress-section-lazy'
+import { ReferralCard } from '@/components/referral-card'
+import { REFERRAL_HOLD_DAYS, REFERRAL_REWARD_PERCENT, REFERRAL_WINDOW_MONTHS } from '@/lib/referrals'
 
 const CATEGORY_ICONS: Record<string, typeof User> = {
   portrait: User,
@@ -39,7 +41,7 @@ export default async function DashboardPage() {
   }
 
   // Parallel fetch: Submissions, Profile, and Progress data
-  const [submissionsRel, profileRel, progressData] = await Promise.all([
+  const [submissionsRel, profileRel, progressData, referralsRel, rewardsRel] = await Promise.all([
       supabase
         .from('submissions')
         .select('id, created_at, category, status, lesson_id, image_path, thumbnail_path, analyses(id, title, score, is_public)')
@@ -49,14 +51,27 @@ export default async function DashboardPage() {
         .limit(100),
       supabase
         .from('profiles')
-        .select('credits_balance')
+        .select('credits_balance, referral_code')
         .eq('id', user.id)
         .single(),
-      getProgressData(supabase, user.id)
+      getProgressData(supabase, user.id),
+      supabase
+        .from('referrals')
+        .select('id', { count: 'exact', head: true })
+        .eq('referrer_id', user.id),
+      supabase
+        .from('referral_rewards')
+        .select('reward_credits, status')
+        .eq('referrer_id', user.id)
+        .in('status', ['pending', 'released'])
   ])
 
   const submissions = submissionsRel.data
   const profile = profileRel.data
+  const rewards = rewardsRel.data ?? []
+  const sumRewards = (status: string) =>
+    rewards.filter((r) => r.status === status).reduce((sum, r) => sum + r.reward_credits, 0)
+  const siteUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.snapcritique.com'
 
   // Enhance submissions with signed URLs (batched: 2 requests total)
   const subs = submissions ?? []
@@ -103,6 +118,21 @@ export default async function DashboardPage() {
           <div className="mb-8 md:mb-12">
              <LazyProgressSection data={progressData} />
           </div>
+
+          {/* Referrals */}
+          {profile?.referral_code && (
+             <div className="mb-8 md:mb-12">
+                <ReferralCard
+                   referralLink={`${siteUrl}/?ref=${profile.referral_code}`}
+                   rewardPercent={REFERRAL_REWARD_PERCENT}
+                   holdDays={REFERRAL_HOLD_DAYS}
+                   windowMonths={REFERRAL_WINDOW_MONTHS}
+                   signups={referralsRel.count ?? 0}
+                   creditsPending={sumRewards('pending')}
+                   creditsEarned={sumRewards('released')}
+                />
+             </div>
+          )}
 
           {/* Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">

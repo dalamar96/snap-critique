@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { StorageCleanupModal } from './storage-manager'
-import { Activity, Users, Database, Globe, Search, List, ArrowRight, AlertTriangle, HardDrive, ShieldCheck, Wrench } from 'lucide-react'
+import { Activity, Users, Database, Globe, Search, List, ArrowRight, AlertTriangle, HardDrive, ShieldCheck, Wrench, Gift } from 'lucide-react'
 import Link from 'next/link'
 import { UserTable } from './user-table'
 import { UnclaimedTable } from './unclaimed-table'
@@ -147,6 +147,17 @@ export function DashboardClient({
                         <div>
                             <h3 className="text-lg font-bold text-white uppercase mb-1">Lessons</h3>
                             <p className="text-slate-500 text-xs">Manage Courses & Content</p>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
+                    </Link>
+
+                    <Link href="/admin/referrals" className="bg-black border border-white/10 p-6 rounded-lg hover:border-primary transition-colors flex items-center justify-between group">
+                        <div className="flex items-center gap-2">
+                            <Gift className="w-5 h-5 text-primary" />
+                            <div>
+                                <h3 className="text-lg font-bold text-white uppercase mb-1">Referrals</h3>
+                                <p className="text-slate-500 text-xs">Referrers, rewards &amp; trends</p>
+                            </div>
                         </div>
                         <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" />
                     </Link>

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { claimGuestSubmission } from '@/lib/claim-guest-submission'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { recordReferral, REFERRAL_COOKIE } from '@/lib/referrals'
 
 // Given a `next` redirect target, returns the submission ID if it points at
 // an analysis page, otherwise null. Shared by login() and signup() so both
@@ -122,10 +123,13 @@ export async function signup(formData: FormData) {
             console.error('Profile creation failed:', profileError)
         }
 
-        // 3. Link Guest Submission if 'next' param points to an analysis
+        // 3. Attribute to a referrer if they arrived via a ?ref= link
+        const cookieStore = await cookies()
+        await recordReferral(adminSupabase, authData.user.id, cookieStore.get(REFERRAL_COOKIE)?.value)
+
+        // 4. Link Guest Submission if 'next' param points to an analysis
         const submissionId = extractSubmissionIdFromNext(next)
         if (submissionId) {
-            const cookieStore = await cookies()
             const guestToken = cookieStore.get(`guest_token_${submissionId}`)?.value
 
             await claimGuestSubmission({

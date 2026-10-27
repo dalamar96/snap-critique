@@ -52,7 +52,10 @@ This guide explains how to connect your Stripe account to the `snap-critique` ap
     - Click **"Add endpoint"**.
     - **Endpoint URL**: `https://your-domain.com/api/webhook` (Replace with your actual Vercel/production domain).
     - **Version**: Latest API version.
-    - **Events to send**: Select `checkout.session.completed`.
+    - **Events to send**: Select:
+      - `checkout.session.completed` — credits purchases, unlocks, queues referral rewards
+      - `charge.refunded` — takes back the buyer's credits and voids/claws back the referral reward
+      - `charge.dispute.created` — same as a refund, for chargebacks
 
 3.  **Get Production Secret**:
     - After creating the endpoint, click "Reveal" under **Signing secret**.

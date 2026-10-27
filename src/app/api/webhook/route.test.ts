@@ -1,17 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { makeFakeSupabase, makeQueryBuilder } from '@/test/fake-supabase'
 
-const { mockAdminClient, mockConstructEvent } = vi.hoisted(() => {
+const { mockAdminClient, mockConstructEvent, mockListSessions } = vi.hoisted(() => {
     const mockAdminClient: Record<string, unknown> = {}
     const mockConstructEvent = vi.fn()
-    return { mockAdminClient, mockConstructEvent }
+    const mockListSessions = vi.fn()
+    return { mockAdminClient, mockConstructEvent, mockListSessions }
 })
 
 vi.mock('@/lib/supabase/admin', () => ({
     createAdminClient: vi.fn(() => mockAdminClient),
 }))
 vi.mock('@/lib/stripe', () => ({
-    stripe: { webhooks: { constructEvent: mockConstructEvent } },
+    stripe: {
+        webhooks: { constructEvent: mockConstructEvent },
+        checkout: { sessions: { list: mockListSessions } },
+    },
 }))
 
 import { POST } from './route'
@@ -43,6 +47,8 @@ describe('POST /api/webhook', () => {
 
     beforeEach(() => {
         mockConstructEvent.mockReset()
+        mockListSessions.mockReset()
+        mockListSessions.mockResolvedValue({ data: [{ id: 'cs_test_123' }] })
         calledTables = []
         const base = makeFakeSupabase()
         Object.assign(mockAdminClient, base)
@@ -74,6 +80,94 @@ describe('POST /api/webhook', () => {
         expect(res.status).toBe(200)
         expect(calledTables).toContain('transactions')
         expect(mockAdminClient.rpc).toHaveBeenCalledWith('increment_credits', { userid: 'user-1', count: 20 })
+    })
+
+    it('queues a pending referral reward for the purchase after a credit-pack purchase', async () => {
+        mockConstructEvent.mockReturnValueOnce(
+            checkoutSessionEvent({ payment_intent: 'pi_123', metadata: { userId: 'user-1', creditAmount: '20' } })
+        )
+
+        const res = await POST(fakeRequest({}))
+
+        expect(res.status).toBe(200)
+        expect(mockAdminClient.rpc).toHaveBeenCalledWith('queue_referral_reward', {
+            p_referred_id: 'user-1',
+            p_session_id: 'cs_test_123',
+            p_payment_intent: 'pi_123',
+            p_purchase_credits: 20,
+            p_purchase_amount: 1499,
+            p_percent: 20,
+            p_hold_days: 7,
+            p_window_months: 12,
+        })
+    })
+
+    it('does not queue a referral reward for the legacy unlock flow', async () => {
+        mockConstructEvent.mockReturnValueOnce(checkoutSessionEvent({ metadata: { analysisId: 'sub-1' } }))
+
+        await POST(fakeRequest({}))
+
+        expect(mockAdminClient.rpc).not.toHaveBeenCalledWith('queue_referral_reward', expect.anything())
+    })
+
+    it.each(['charge.refunded', 'charge.dispute.created'])('voids referral rewards for the payment on %s', async (type) => {
+        mockConstructEvent.mockReturnValueOnce({ type, data: { object: { payment_intent: 'pi_123' } } })
+
+        const res = await POST(fakeRequest({}))
+
+        expect(res.status).toBe(200)
+        expect(mockAdminClient.rpc).toHaveBeenCalledWith('void_referral_rewards', { p_payment_intent: 'pi_123' })
+    })
+
+    it.each(['charge.refunded', 'charge.dispute.created'])('takes the buyer\'s purchased credits back on %s', async (type) => {
+        mockConstructEvent.mockReturnValueOnce({ type, data: { object: { payment_intent: 'pi_123' } } })
+
+        const res = await POST(fakeRequest({}))
+
+        expect(res.status).toBe(200)
+        expect(mockListSessions).toHaveBeenCalledWith({ payment_intent: 'pi_123', limit: 1 })
+        expect(mockAdminClient.rpc).toHaveBeenCalledWith('reverse_credit_purchase', { p_session_id: 'cs_test_123' })
+    })
+
+    it('skips the purchase reversal when no checkout session matches the payment', async () => {
+        mockConstructEvent.mockReturnValueOnce({ type: 'charge.refunded', data: { object: { payment_intent: 'pi_other' } } })
+        mockListSessions.mockResolvedValueOnce({ data: [] })
+
+        const res = await POST(fakeRequest({}))
+
+        expect(res.status).toBe(200)
+        expect(mockAdminClient.rpc).not.toHaveBeenCalledWith('reverse_credit_purchase', expect.anything())
+    })
+
+    it('returns 500 so Stripe retries when the checkout session lookup fails', async () => {
+        mockConstructEvent.mockReturnValueOnce({ type: 'charge.refunded', data: { object: { payment_intent: 'pi_123' } } })
+        mockListSessions.mockRejectedValueOnce(new Error('stripe down'))
+
+        const res = await POST(fakeRequest({}))
+
+        expect(res.status).toBe(500)
+    })
+
+    it('returns 500 so Stripe retries when reversing the purchase fails', async () => {
+        mockConstructEvent.mockReturnValueOnce({ type: 'charge.dispute.created', data: { object: { payment_intent: 'pi_123' } } })
+        mockAdminClient.rpc = vi.fn(async (fn: string) =>
+            fn === 'reverse_credit_purchase'
+                ? { data: null, error: { message: 'db down' } }
+                : { data: null, error: null }
+        )
+
+        const res = await POST(fakeRequest({}))
+
+        expect(res.status).toBe(500)
+    })
+
+    it('returns 500 so Stripe retries when voiding referral rewards fails', async () => {
+        mockConstructEvent.mockReturnValueOnce({ type: 'charge.refunded', data: { object: { payment_intent: 'pi_123' } } })
+        mockAdminClient.rpc = vi.fn(async () => ({ data: null, error: { message: 'db down' } }))
+
+        const res = await POST(fakeRequest({}))
+
+        expect(res.status).toBe(500)
     })
 
     it('falls back to a manual read-modify-write when increment_credits RPC fails', async () => {

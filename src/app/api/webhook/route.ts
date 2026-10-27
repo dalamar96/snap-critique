@@ -2,10 +2,17 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { REFERRAL_HOLD_DAYS, REFERRAL_REWARD_PERCENT, REFERRAL_WINDOW_MONTHS } from '@/lib/referrals';
 
 // This is your Stripe CLI webhook secret for testing your endpoint locally.
 // For production, use the webhook secret from the Stripe Dashboard.
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+// Stripe fields like payment_intent are an id string unless expanded.
+function stripeId(ref: string | { id: string } | null | undefined): string | null {
+    if (!ref) return null;
+    return typeof ref === 'string' ? ref : ref.id;
+}
 
 export async function POST(req: Request) {
     const body = await req.text();
@@ -96,6 +103,25 @@ export async function POST(req: Request) {
             } else {
                 console.log('[Webhook] Credits added successfully');
             }
+
+            // 3. Referral reward: queued as pending, released by the daily
+            // cron after the hold period (the RPC no-ops if unreferred).
+            const { data: rewardCredits, error: referralError } = await supabase.rpc('queue_referral_reward', {
+                p_referred_id: userId,
+                p_session_id: session.id,
+                p_payment_intent: stripeId(session.payment_intent),
+                p_purchase_credits: creditsToAdd,
+                p_purchase_amount: amount,
+                p_percent: REFERRAL_REWARD_PERCENT,
+                p_hold_days: REFERRAL_HOLD_DAYS,
+                p_window_months: REFERRAL_WINDOW_MONTHS
+            });
+
+            if (referralError) {
+                console.error('[Webhook] Failed to queue referral reward:', referralError);
+            } else if (rewardCredits) {
+                console.log(`[Webhook] Queued ${rewardCredits} pending referral credits for session ${session.id}`);
+            }
         }
 
         // Handle Direct Analysis Unlock (Legacy / Single Purchase)
@@ -119,6 +145,54 @@ export async function POST(req: Request) {
                 .from('analyses')
                 .update({ is_unlocked: true })
                 .eq('submission_id', metadata.analysisId);
+        }
+    }
+
+    // Refunds (full or partial) and chargebacks reverse the purchase: the
+    // buyer's credits are taken back, and the referral reward for that
+    // payment is voided (cancelled if still pending, clawed back if
+    // released). Both RPCs are idempotent, so on any failure we return
+    // non-2xx and let Stripe retry the whole event.
+    if (event.type === 'charge.refunded' || event.type === 'charge.dispute.created') {
+        const paymentIntent = stripeId((event.data.object as Stripe.Charge | Stripe.Dispute).payment_intent);
+
+        if (paymentIntent) {
+            const { data: affected, error } = await supabase.rpc('void_referral_rewards', {
+                p_payment_intent: paymentIntent
+            });
+
+            if (error) {
+                console.error(`[Webhook] Failed to void referral rewards for ${paymentIntent}:`, error);
+                return NextResponse.json({ error: 'Failed to void referral rewards' }, { status: 500 });
+            }
+            if (affected) {
+                console.log(`[Webhook] Voided/reversed ${affected} referral reward(s) for ${paymentIntent} (${event.type})`);
+            }
+
+            // Purchases are stored by checkout session id, so look up the
+            // session that created this payment.
+            let sessionId: string | undefined;
+            try {
+                const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntent, limit: 1 });
+                sessionId = sessions.data[0]?.id;
+            } catch (err) {
+                console.error(`[Webhook] Failed to look up checkout session for ${paymentIntent}:`, err);
+                return NextResponse.json({ error: 'Failed to look up checkout session' }, { status: 500 });
+            }
+
+            if (sessionId) {
+                const { data: creditsRemoved, error: reverseError } = await supabase.rpc('reverse_credit_purchase', {
+                    p_session_id: sessionId
+                });
+
+                if (reverseError) {
+                    console.error(`[Webhook] Failed to reverse credit purchase ${sessionId}:`, reverseError);
+                    return NextResponse.json({ error: 'Failed to reverse credit purchase' }, { status: 500 });
+                }
+                if (creditsRemoved) {
+                    console.log(`[Webhook] Removed ${creditsRemoved} purchased credits for session ${sessionId} (${event.type})`);
+                }
+            }
         }
     }
 
